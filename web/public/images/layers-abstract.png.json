@@ -1,0 +1,28 @@
+{
+  "file": "layers-abstract.png",
+  "ai_generated": true,
+  "label": "AI concept",
+  "prompt": "Abstract, elegant isometric illustration of three translucent stacked rounded rectangular layers floating above each other with even spacing on a pure white background. Bottom layer deep navy (#0b1f3a), middle layer saturated blue (#1c69d4), top layer light sky blue (#9fc6f5); each layer slightly glassy and translucent with subtle inner edges, thin luminous connecting lines and small dots between the layers suggesting data flowing upwards. Soft diffuse shadows, clean vector-like rendering, generous white space, calm premium look. No text, no letters, no numbers, no logos, no icons.",
+  "revised_prompt": null,
+  "model": "gpt-image-2.5-flare",
+  "endpoint": "images/generations",
+  "references": [],
+  "size": "1536x1024",
+  "actual_dimensions": "1536x1024",
+  "quality": "medium",
+  "background": "opaque",
+  "usage": {
+    "input_tokens": 126,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 126
+    },
+    "output_tokens": 343,
+    "output_tokens_details": {
+      "image_tokens": 343,
+      "text_tokens": 0
+    },
+    "total_tokens": 469
+  },
+  "created": "2026-10-10T16:15:17.750Z"
+}

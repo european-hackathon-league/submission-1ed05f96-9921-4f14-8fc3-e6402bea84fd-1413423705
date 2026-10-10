@@ -1,0 +1,25 @@
+gantt
+  title Dixi 30-hour build (Sat 10 Oct, 14:00 to Sun 11 Oct, ~20:00)
+  dateFormat YYYY-MM-DD HH:mm
+  axisFormat %a %H:%M
+  section Foundation
+  Repo + Entire + Supabase schema (layers, weights, decisions) :a1, 2026-10-10 14:00, 2h
+  BMW data → evidence, market + model tagged (swappable loader) :a2, after a1, 2h
+  section Core 1 · Scoring + weights
+  Source-weight table + per-model profiles (1 vs 7 Series) :b1, after a2, 2h
+  Principles store L1 + principle gate                     :b2, after b1, 2h
+  Scoring engine + volume-weighted conflict rule           :b3, after b2, 2h
+  section Core 2 · Human in the loop
+  Gates G1–G4 + roles + approve / edit / postpone / reject :c1, 2026-10-10 22:00, 3h
+  Requirement writer (SMART, ~90% drafted, Keep / Edit)    :c2, after c1, 2h
+  section Core 3 · Trace + memory + gaps
+  Lineage store + 7 Series lineage view                    :d1, 2026-10-11 03:00, 3h
+  Decision memory (PM-editable, versioned)                 :d2, after d1, 2h
+  Evidence-gap detector + "What we don't know" panel       :d3, after d2, 2h
+  section Hand-off
+  Codebeamer export (ReqIF / CSV)                          :e1, 2026-10-11 10:00, 2h
+  Dashboard (8 views) wired to real pipeline output         :e2, 2026-10-11 10:00, 4h
+  section Optional (last)
+  One illustrative concept image, labelled AI concept      :f1, 2026-10-11 14:00, 1h
+  section Pitch
+  Demo script · rehearsal · backup video                   :g1, 2026-10-11 15:00, 5h

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* Dixi · light theme only (for now).
+ * BMW-inspired blues; depth of blue = strength of a layer. M red marks a human decision, used sparingly.
+ * Use the Tailwind colour names below (bg-surface, text-ink, text-brand, bg-l1 …), never hex values in components.
+ */
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --surface: #ffffff;
+  --ink: #0d1b2a;
+  --ink-soft: #3b4a5c;
+  --muted: #6b7a8f;
+  --line: #e3e8ef;
+
+  --brand: #1c69d4;        /* BMW blue: primary actions */
+  --brand-deep: #0f3d75;   /* deep navy: headings accents, L1 */
+  --brand-soft: #eaf2fd;
+  --brand-sky: #8ec5ff;    /* light M blue: L3 signals */
+
+  --l1: #0f3d75;  --l1-soft: #e6edf6;   /* principles */
+  --l2: #1c69d4;  --l2-soft: #eaf2fd;   /* evidence */
+  --l3: #5aa9f0;  --l3-soft: #eaf5fe;   /* signals */
+
+  --human: #e22718;  --human-soft: #fdecea;   /* human decision */
+  --good: #1e8e3e;   --good-soft: #e6f4ea;    /* positive comment / approved */
+  --bad: #d93025;    --bad-soft: #fce8e6;     /* negative comment / rejected */
+  --wait: #b26b00;   --wait-soft: #fdf2df;
+
+  /* markets */
+  --eu: #1c69d4; --cn: #e0483a; --us: #0f3d75; --jp: #7c5cd6;
+
+  --radius: 14px;
+  --shadow-sm: 0 1px 2px rgba(13, 27, 42, .06), 0 1px 3px rgba(13, 27, 42, .06);
+  --shadow-lg: 0 18px 50px -12px rgba(13, 27, 42, .18);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-sky: var(--brand-sky);
+  --color-l1: var(--l1); --color-l1-soft: var(--l1-soft);
+  --color-l2: var(--l2); --color-l2-soft: var(--l2-soft);
+  --color-l3: var(--l3); --color-l3-soft: var(--l3-soft);
+  --color-human: var(--human); --color-human-soft: var(--human-soft);
+  --color-good: var(--good); --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad); --color-bad-soft: var(--bad-soft);
+  --color-wait: var(--wait); --color-wait-soft: var(--wait-soft);
+  --color-eu: var(--eu); --color-cn: var(--cn); --color-us: var(--us); --color-jp: var(--jp);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-card: var(--radius);
+  --shadow-card: var(--shadow-sm);
+  --shadow-float: var(--shadow-lg);
+}
+
+html { color-scheme: light; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+::selection { background: var(--brand-soft); color: var(--brand-deep); }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }

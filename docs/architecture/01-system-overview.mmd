@@ -1,0 +1,83 @@
+flowchart TB
+  %% Dixi: a principled, weighted, traceable requirement engine.
+  %% Colours follow branding/tokens.css: grey = AI on its own, blue = AI proposes, red = human only.
+  %% Layers: L1 deep blue (principles), L2 BMW blue (evidence), L3 light blue (signals).
+
+  subgraph SRC["① Sources (swappable)"]
+    direction LR
+    S1[("BMW internal<br/>owner feedback · customer studies<br/>sales · quality reports")]
+    S2[("External<br/>expert reviews · press<br/>competitor specs")]
+    S3[("Signals<br/>social media · search trends<br/>concept-test reactions")]
+    S4[/"Management decisions<br/>brand · legal · market rules"/]
+  end
+
+  subgraph ING["② Ingest"]
+    direction LR
+    IN["Ingest + normalise<br/>dedupe · language · market + model tag"]
+    LB["Label + cluster<br/>topic · polarity · severity<br/>5% weekly spot check"]
+  end
+
+  subgraph LAY["③ Three layers"]
+    direction LR
+    L1[("L1 Principles store<br/>5–10 rules per market<br/>owner · version · change log")]
+    L2[("L2 Evidence store<br/>Postgres + pgvector<br/>main engine")]
+    L3[("L3 Signals<br/>low weight, per model<br/>1 Series high · 7 Series ≈ 0")]
+  end
+
+  subgraph SC["④ Scoring engine"]
+    direction TB
+    WT["Weights (PM sets, AI suggests)<br/>layer weights × source weights per model"]
+    SE["Score = Σ source weight × support<br/>× market volume share"]
+    PG{"Principle gate<br/>conflict → flag · fit → boost"}
+    CR["Conflict rule<br/>volume-weighted market preference<br/>never averaged, objection kept"]
+  end
+
+  RW["⑤ Requirement writer<br/>SMART fields · evidence ≠ assumption<br/>~90% drafted by AI · Keep / Edit"]
+
+  subgraph GATES["⑥ PM gates"]
+    direction LR
+    G1{{"G1 Evidence accepted<br/>PM"}}
+    G2{{"G2 Engineering check<br/>BOM · carry-over · complexity"}}
+    G3{{"G3 Priorities frozen<br/>approve · edit · postpone · reject"}}
+    G4{{"G4 Hand-off<br/>PM confirms export"}}
+  end
+
+  DM[("Decision memory<br/>reason per decision · lessons<br/>AI-readable · PM can edit")]
+  LS[("Lineage store<br/>every step: principle → evidence<br/>→ weight → rule → decision")]
+  CB[["PTC Codebeamer<br/>SMART requirements · ReqIF / CSV"]]
+  GAP["Evidence-gap detector<br/>missing · thin · conflict · quality"]
+  WDK["'What we don't know' panel<br/>PM decides what to measure"]
+
+  S1 & S2 & S3 --> IN --> LB
+  LB --> L2
+  LB --> L3
+  S4 --> L1
+  L1 --> PG
+  L2 --> SE
+  L3 --> SE
+  WT --> SE --> PG --> CR --> RW
+  RW --> G1 --> G2 --> G3 --> G4 --> CB
+  G1 & G2 & G3 & G4 -- "who · when · why · snapshot" --> DM
+  RW -- "every step logged" --> LS
+  DM -- "past decisions + lessons" --> RW
+  SE --> GAP --> WDK
+  WDK -. "measure this" .-> SRC
+  G3 -. "postponed: revisit with new evidence" .-> SE
+
+  classDef auto fill:#eef1f6,stroke:#5b6676,color:#121722
+  classDef propose fill:#e8f0fc,stroke:#1c69d4,color:#121722
+  classDef human fill:#fdecea,stroke:#e22718,color:#121722,stroke-width:2px
+  classDef l1 fill:#16588e,stroke:#16588e,color:#ffffff
+  classDef l2 fill:#1c69d4,stroke:#1c69d4,color:#ffffff
+  classDef l3 fill:#e5f3fe,stroke:#2f95e6,color:#121722
+  classDef store fill:#ffffff,stroke:#16588e,color:#121722
+  classDef src fill:#f7f9fc,stroke:#98a2b3,color:#121722
+
+  class S1,S2,S3 src
+  class S4,WT,G1,G2,G3,G4 human
+  class IN,LB,SE,LS,GAP auto
+  class PG,CR,RW,WDK propose
+  class L1 l1
+  class L2 l2
+  class L3 l3
+  class DM,CB store

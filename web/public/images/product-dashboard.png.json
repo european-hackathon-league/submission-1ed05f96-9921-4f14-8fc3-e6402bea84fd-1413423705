@@ -1,0 +1,28 @@
+{
+  "file": "product-dashboard.png",
+  "ai_generated": true,
+  "label": "AI concept",
+  "prompt": "Photorealistic, bright, minimal studio product photograph. A modern slim silver laptop, open, seen at a slight three-quarter angle, resting on a clean light-grey desk. Its screen shows a clean light-mode analytics dashboard: a soft world map / globe visual with small blue location dots, a ranked list rendered as abstract grey bars and blue pill shapes, and a few small blue bar and line charts in white cards. All interface text is replaced by abstract grey placeholder lines; nothing is legible. Soft natural daylight from a large window on the left, gentle shadows, white and light-grey palette with saturated blue (#1c69d4) accents only on the screen, a small ceramic cup and a plant softly out of focus in the background. Shallow depth of field, focus on the screen. No logos, no brand names, no readable text or numbers, no keyboard lettering visible, no people, no hands.",
+  "revised_prompt": null,
+  "model": "gpt-image-2.5-flare",
+  "endpoint": "images/generations",
+  "references": [],
+  "size": "1536x1024",
+  "actual_dimensions": "1536x1024",
+  "quality": "high",
+  "background": "opaque",
+  "usage": {
+    "input_tokens": 192,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 192
+    },
+    "output_tokens": 1372,
+    "output_tokens_details": {
+      "image_tokens": 1372,
+      "text_tokens": 0
+    },
+    "total_tokens": 1564
+  },
+  "created": "2026-10-10T16:15:02.098Z"
+}

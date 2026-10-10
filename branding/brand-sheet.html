@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dixi Brand Sheet</title>
+<link rel="icon" href="logo-mark.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Geist", system-ui, sans-serif; line-height: 1.55; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 48px 16px 72px; display: grid; gap: 40px; }
+  h1 { font-size: 2.6rem; font-weight: 600; letter-spacing: -.02em; margin: 8px 0 0; }
+  h2 { font-size: 1.15rem; font-weight: 600; margin: 0 0 14px; }
+  p { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .tile { border-radius: var(--radius); border: 1px solid var(--line); min-height: 140px; display: grid; place-items: center; padding: 24px; }
+  .tile.soft { background: var(--bg-soft); } .tile.dark { background: var(--ink); border-color: var(--ink); }
+  .tile img { max-width: 100%; height: 48px; } .tile img.mark { height: 72px; }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .sw div { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .sw i { display: block; height: 60px; }
+  .sw span { display: grid; padding: 8px 10px; font-size: .82rem; }
+  .sw code { font-family: "Geist Mono", monospace; color: var(--muted); font-size: .74rem; }
+  .layers { display: grid; gap: 8px; }
+  .layer { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; border-radius: 12px; padding: 12px 14px; }
+  .layer b { font-family: "Geist Mono", monospace; font-size: .8rem; color: #fff; border-radius: 8px; padding: 4px 0; text-align: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-size: .82rem; font-weight: 500; padding: 4px 10px; border-radius: 99px; }
+  .type .big { font-size: 3.6rem; font-weight: 600; letter-spacing: -.03em; line-height: 1.05; color: var(--ink); }
+  .type .big span { color: var(--brand); }
+  .mono { font-family: "Geist Mono", monospace; color: var(--ink-soft); }
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { font: inherit; font-weight: 500; font-size: .95rem; padding: 10px 18px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  @media (max-width: 720px) { .tiles { grid-template-columns: minmax(0, 1fr); } .type .big { font-size: 2.4rem; } }
+</style>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.svg" alt="Dixi" style="height:40px">
+    <h1>Brand sheet</h1>
+    <p>Dixi is named after the Dixi 3/15, BMW's first car (1928). Colours inspired by BMW's public brand and BMW M colours; never the BMW logo.</p>
+  </header>
+
+  <section>
+    <h2>Logo</h2>
+    <div class="tiles">
+      <div class="tile"><img src="logo.svg" alt="Dixi logo on white"></div>
+      <div class="tile soft"><img class="mark" src="logo-mark.svg" alt="Dixi mark"></div>
+      <div class="tile dark"><img src="logo-on-dark.svg" alt="Dixi logo on dark"></div>
+    </div>
+    <p style="margin-top:12px">A globe crossed by a decision track: signal (light blue) → evidence (BMW blue) → human sign-off (M red).</p>
+  </section>
+
+  <section>
+    <h2>Three layers: depth of blue = strength of signal</h2>
+    <div class="layers">
+      <div class="layer" style="background:var(--l1-soft)"><b style="background:var(--l1)">L1</b><p><strong style="color:var(--ink)">Principles.</strong> Hard rules per market, owned by managers.</p></div>
+      <div class="layer" style="background:var(--l2-soft)"><b style="background:var(--l2)">L2</b><p><strong style="color:var(--ink)">Evidence.</strong> Customer studies, owner feedback, sales, quality reports.</p></div>
+      <div class="layer" style="background:var(--l3-soft)"><b style="background:var(--l3)">L3</b><p><strong style="color:var(--ink)">Signals.</strong> Social media, search trends, concept tests. Low weight.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Status and markets</h2>
+    <div class="chips">
+      <span class="chip" style="background:var(--good-soft);color:var(--good)">Good / Approved</span>
+      <span class="chip" style="background:var(--bad-soft);color:var(--bad)">Bad / Rejected</span>
+      <span class="chip" style="background:var(--wait-soft);color:var(--wait)">Postponed</span>
+      <span class="chip" style="background:var(--human-soft);color:var(--human)">Your decision</span>
+      <span class="chip" style="background:var(--bg-soft);color:var(--eu)">● Europe</span>
+      <span class="chip" style="background:var(--bg-soft);color:var(--cn)">● China</span>
+      <span class="chip" style="background:var(--bg-soft);color:var(--us)">● USA</span>
+      <span class="chip" style="background:var(--bg-soft);color:var(--jp)">● Japan</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Colour tokens</h2>
+    <div class="sw" id="sw"></div>
+  </section>
+
+  <section class="type">
+    <h2>Type</h2>
+    <p class="big">Hear every market. <span>Decide with a reason.</span></p>
+    <p style="margin-top:10px">Geist Sans: interface and headlines. Short sentences, active voice.</p>
+    <p class="mono" style="margin-top:6px">Geist Mono: R-701 · P-03 · G3 · 0.86</p>
+  </section>
+
+  <section>
+    <h2>Buttons</h2>
+    <div class="btns"><button class="btn primary" type="button">Open dashboard →</button><button class="btn" type="button">See how it works</button></div>
+  </section>
+</div>
+<script>
+  const t = [["--brand","Primary"],["--brand-deep","Deep"],["--brand-sky","Sky"],["--l1","L1 Principles"],["--l2","L2 Evidence"],["--l3","L3 Signals"],["--human","Human decision"],["--good","Good"],["--bad","Bad"],["--wait","Postponed"],["--ink","Ink"],["--muted","Muted"],["--line","Line"],["--bg-soft","Background soft"]];
+  const cs = getComputedStyle(document.documentElement);
+  document.getElementById("sw").innerHTML = t.map(([v, n]) => `<div><i style="background:var(${v})"></i><span><b>${n}</b><code>${v}</code><code>${cs.getPropertyValue(v).trim()}</code></span></div>`).join("");
+</script>
+</body>
+</html>

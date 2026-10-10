@@ -1,0 +1,69 @@
+# =====================================================================
+#  ALLOW-LIST: everything at the repo root is ignored by default.
+#  Only the paths below are committed. To add a new top-level folder,
+#  add a "!/<folder>/" line here on purpose.
+# =====================================================================
+/*
+!/.gitignore
+!/AGENTS.md
+!/CLAUDE.md
+!/web/
+!/backend/
+!/docs/
+!/tech-stack/
+!/branding/
+!/scripts/
+
+# ---------- Never commit, anywhere (safety net) ----------
+# secrets
+.env
+.env.*
+!.env.example
+# personal / received material (also covered by the allow-list)
+/data/
+/memory.md
+/prompts/
+# data and document file types
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.sqlite
+*.sqlite3
+*.db
+*.pdf
+*.PDF
+*.pptx
+*.ppt
+*.key
+*.docx
+# large media
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.wav
+*.mp3
+*.m4a
+*.part
+
+# ---------- Build output and dependencies ----------
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# ---------- OS / editor ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
