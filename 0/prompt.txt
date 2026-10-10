@@ -406,3 +406,7 @@ in the analytics page, i would love to see the iamges of the post that was gener
 ---
 
 also in the weisghts settings, i want a input that as a manager i can sen d a natural text and the ai will send the right weidhts to setup this, laso make sure is in architecture and UI.
+
+---
+
+push ti git ans entire
