@@ -1,3 +1,8 @@
+# Human-in-the-loop map
+
+Where the human sits in the pipeline, and why.
+
+```mermaid
 flowchart LR
   %% Human-in-the-loop map: pipeline steps from sample-data.js, coloured by mode, with gates G1–G4.
   %% Placement rule: a human sits where a step is hard to reverse, needs unwritten knowledge,
@@ -36,3 +41,4 @@ flowchart LR
   class evidence,draft,conflict,handoff propose
   class principles,weights,engineering,prioritise human
   class G1,G2,G3,G4 gate
+```

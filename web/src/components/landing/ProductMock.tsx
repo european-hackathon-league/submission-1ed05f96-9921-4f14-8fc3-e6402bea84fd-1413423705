@@ -1,115 +1,176 @@
-/* Coded product preview: a small, static dashboard mock built from divs (sample content, not BMW data). */
-import { TriangleAlert, Check, Clock, GitBranch, Pencil, X } from "lucide-react";
+/* Coded product preview: a catalogue-style profile page next to the generations list.
+ * Sample content written for the landing page, not BMW data. */
+import Image from "next/image";
+import { Download, History, RotateCcw, Columns2, FolderOpen, X } from "lucide-react";
+import { CAR_IMAGES } from "@/lib/car-images";
 
-type Status = "kept" | "edited" | "postponed" | "rejected";
+const COVER = CAR_IMAGES.G60.front;
 
-const STATUS: Record<Status, { label: string; cls: string; Icon: typeof Check }> = {
-  kept: { label: "Kept", cls: "bg-good-soft text-good", Icon: Check },
-  edited: { label: "Edited", cls: "bg-brand-soft text-brand-deep", Icon: Pencil },
-  postponed: { label: "Postponed", cls: "bg-wait-soft text-wait", Icon: Clock },
-  rejected: { label: "Rejected", cls: "bg-bad-soft text-bad", Icon: X },
-};
+type Mark = "this" | "other" | "none";
 
-const ROWS: { id: string; title: string; score: number; mix: [number, number, number]; status: Status }[] = [
-  { id: "R-12", title: "Climate controls reachable without the touchscreen", score: 86, mix: [20, 72, 8], status: "kept" },
-  { id: "R-07", title: "Phone pairs in under 5 s on 95% of attempts", score: 78, mix: [10, 80, 10], status: "edited" },
-  { id: "R-21", title: "Body width fits standard Japanese car parks", score: 74, mix: [70, 28, 2], status: "kept" },
-  { id: "R-30", title: "Monthly over-the-air feature updates", score: 61, mix: [5, 50, 45], status: "postponed" },
-  { id: "R-33", title: "Paid subscription for heated seats", score: 22, mix: [0, 60, 40], status: "rejected" },
+const MATRIX: { area: string; rows: { title: string; marks: [Mark, Mark, Mark] }[] }[] = [
+  {
+    area: "Interior",
+    rows: [
+      { title: "Quieter cabin on the motorway", marks: ["this", "none", "other"] },
+      { title: "Rear seats that recline", marks: ["this", "none", "none"] },
+    ],
+  },
+  {
+    area: "Digital",
+    rows: [
+      { title: "Climate controls without the touchscreen", marks: ["this", "other", "none"] },
+      { title: "Phone pairs first time, every time", marks: ["none", "other", "other"] },
+    ],
+  },
 ];
 
-function Mix({ mix }: { mix: [number, number, number] }) {
-  return (
-    <div className="flex h-1.5 w-16 overflow-hidden rounded-full bg-bg-soft" aria-hidden>
-      <span className="bg-l1" style={{ width: `${mix[0]}%` }} />
-      <span className="bg-l2" style={{ width: `${mix[1]}%` }} />
-      <span className="bg-l3" style={{ width: `${mix[2]}%` }} />
-    </div>
-  );
+const GENERATIONS = [
+  { id: "Gen 3", car: "5 Series · Europe", when: "Today", active: true },
+  { id: "Gen 2", car: "5 Series · Europe", when: "2 days ago" },
+  { id: "Gen 1", car: "7 Series · China", when: "Last week" },
+];
+
+function MarkCell({ m }: { m: Mark }) {
+  if (m === "none") return <span className="text-muted/60">–</span>;
+  return m === "this" ? <span className="text-ink">■</span> : <span className="text-muted">□</span>;
 }
 
 export function ProductMock() {
   return (
-    <div
-      role="img"
-      aria-label="Preview of the Dixi dashboard: a list of draft requirements with scores, layer mix and the product manager's decision, a lineage trail and an evidence-gap warning."
+    <figure
+      aria-label="Preview of Dixi: a catalogue-style car profile with a requirements matrix, next to the list of saved generations and a decision with its reason."
       className="overflow-hidden rounded-[18px] bg-surface shadow-float ring-1 ring-line"
     >
       {/* window chrome */}
       <div className="flex items-center gap-2 border-b border-line bg-bg-soft px-4 py-2.5">
-        <span className="size-2.5 rounded-full bg-line" />
-        <span className="size-2.5 rounded-full bg-line" />
-        <span className="size-2.5 rounded-full bg-line" />
-        <span className="ml-3 truncate rounded-md bg-surface px-3 py-0.5 font-mono text-[11px] text-muted ring-1 ring-line">
-          dixi / 7 Series successor / requirements
+        <span aria-hidden className="size-2.5 rounded-full bg-line" />
+        <span aria-hidden className="size-2.5 rounded-full bg-line" />
+        <span aria-hidden className="size-2.5 rounded-full bg-line" />
+        <span className="ml-3 min-w-0 truncate rounded-md bg-surface px-3 py-0.5 font-mono text-[11px] text-muted ring-1 ring-line">
+          dixi / generations / 5 Series · Europe / profile A
         </span>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_250px]">
-        {/* requirements table */}
-        <div className="min-w-0 p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-ink">Draft requirements</p>
-            <div className="flex gap-1.5 text-[11px] font-medium">
-              {["All markets", "EU", "CN", "US", "JP"].map((t, i) => (
-                <span key={t} className={`rounded-full px-2 py-0.5 ${i === 0 ? "bg-brand text-white" : "bg-bg-soft text-ink-soft"}`}>
-                  {t}
+      <div className="grid md:grid-cols-[minmax(0,1fr)_280px]">
+        {/* catalogue page */}
+        <div className="min-w-0 p-3 sm:p-5">
+          <div className="overflow-hidden rounded-xl ring-1 ring-line">
+            <div className="relative isolate min-h-[240px] bg-ink text-white sm:min-h-[320px]">
+              <Image src={COVER.src} alt={COVER.alt} fill sizes="(min-width: 768px) 640px, 100vw" className="-z-10 object-cover object-[50%_65%]" />
+              <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/90 via-ink/45 to-transparent" />
+              <div aria-hidden className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-ink/80 to-transparent" />
+              <div className="flex min-h-[240px] flex-col justify-between gap-6 p-5 sm:min-h-[320px] sm:p-6">
+                <div>
+                  <p className="text-4xl font-light tracking-tight sm:text-5xl">BMW 5</p>
+                  <p className="mt-1.5 text-[11px] font-semibold tracking-[0.25em] text-white/85 uppercase sm:text-xs">
+                    Profile A · Comfort &amp; craft
+                  </p>
+                  <p className="mt-3 max-w-[16rem] text-sm text-white/75">Quiet long trips, fewer screens in the way.</p>
+                </div>
+                <div className="flex flex-wrap items-end justify-between gap-2 text-[10px]">
+                  <span className="font-semibold tracking-[0.2em] text-white/90 uppercase">Europe · Gen 3</span>
+                  <a href={COVER.page} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white hover:underline">
+                    {COVER.credit} · modified
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-lg font-semibold tracking-tight text-ink uppercase">Requirements.</p>
+                <p className="text-[11px] text-muted">In your priority order</p>
+              </div>
+              <table className="mt-2 w-full text-[12px] sm:text-[13px]">
+                <thead>
+                  <tr className="text-[11px] text-muted">
+                    <th className="pb-1 text-left font-normal">
+                      <span className="sr-only">Requirement</span>
+                    </th>
+                    {["A", "B", "C"].map((p) => (
+                      <th key={p} className={`w-8 pb-1 font-normal sm:w-10 ${p === "A" ? "font-semibold text-ink" : ""}`}>
+                        {p}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                {MATRIX.map((g) => (
+                  <tbody key={g.area}>
+                    <tr>
+                      <td colSpan={4} className="pt-3">
+                        <p className="border-b border-ink/70 pb-1 text-[11px] font-semibold tracking-[0.12em] text-ink uppercase">{g.area}</p>
+                      </td>
+                    </tr>
+                    {g.rows.map((r) => (
+                      <tr key={r.title} className={`border-b border-line ${r.marks[0] === "this" ? "text-ink" : "text-muted"}`}>
+                        <td className="py-2 pr-2">{r.title}</td>
+                        {r.marks.map((m, i) => (
+                          <td key={i} className="py-2 text-center">
+                            <MarkCell m={m} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                ))}
+              </table>
+              <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
+                <span>■ In this profile</span>
+                <span>□ In another profile</span>
+                <span>– Not included</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* side panel: generations + a decision */}
+        <aside className="flex flex-col gap-4 border-t border-line bg-bg-soft/60 p-4 sm:p-5 md:border-t-0 md:border-l">
+          <div>
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+              <History className="size-3.5 text-brand" aria-hidden /> Generations
+            </p>
+            <ul className="mt-2.5 flex flex-col gap-2">
+              {GENERATIONS.map((g) => (
+                <li
+                  key={g.id}
+                  className={`rounded-lg px-3 py-2 text-[12px] ring-1 ${g.active ? "bg-surface ring-brand/40" : "bg-surface/70 ring-line"}`}
+                >
+                  <p className="flex items-baseline justify-between gap-2">
+                    <span className="font-semibold text-ink">{g.id}</span>
+                    <span className="text-[11px] text-muted">{g.when}</span>
+                  </p>
+                  <p className="text-ink-soft">{g.car}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px] font-medium text-ink-soft">
+              {[
+                { label: "Reopen", Icon: FolderOpen },
+                { label: "Compare", Icon: Columns2 },
+                { label: "Rebuild", Icon: RotateCcw },
+              ].map(({ label, Icon }) => (
+                <span key={label} className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 ring-1 ring-line">
+                  <Icon className="size-3" aria-hidden /> {label}
                 </span>
               ))}
             </div>
           </div>
-          <ul className="mt-4 divide-y divide-line">
-            {ROWS.map((r, i) => {
-              const s = STATUS[r.status];
-              return (
-                <li key={r.id} className={`flex items-center gap-3 py-2.5 ${i === 1 ? "-mx-2 rounded-lg bg-brand-soft/60 px-2" : ""}`}>
-                  <span className="hidden w-10 shrink-0 font-mono text-[11px] text-muted sm:block">{r.id}</span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{r.title}</span>
-                  <span className="hidden sm:block">
-                    <Mix mix={r.mix} />
-                  </span>
-                  <span className="w-7 shrink-0 text-right font-mono text-xs font-semibold text-ink-soft">{r.score}</span>
-                  <span className={`inline-flex w-[88px] shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${s.cls}`}>
-                    <s.Icon className="size-3" aria-hidden />
-                    {s.label}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
 
-        {/* side panel: lineage + gaps */}
-        <aside className="border-t border-line bg-bg-soft/60 p-4 sm:p-5 md:border-t-0 md:border-l">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
-            <GitBranch className="size-3.5 text-brand" aria-hidden /> Lineage · R-07
-          </p>
-          <ol className="mt-3 space-y-2.5 border-l-2 border-line pl-3 text-[12px]">
-            <li>
-              <span className="text-muted">Comment</span>
-              <p className="text-ink-soft">“CarPlay drops out too often.”</p>
-            </li>
-            <li>
-              <span className="text-muted">Evidence</span>
-              <p className="text-ink-soft">Owner feedback, US · 3 sources</p>
-            </li>
-            <li>
-              <span className="text-muted">AI draft</span>
-              <p className="text-ink-soft">Pairs in under 8 s</p>
-            </li>
-            <li>
-              <span className="font-medium text-human">PM decision</span>
-              <p className="text-ink-soft">Tightened to 5 s: matches rivals</p>
-            </li>
-          </ol>
-          <div className="mt-4 rounded-lg bg-wait-soft p-2.5 text-[12px] text-ink-soft ring-1 ring-wait/20">
-            <p className="flex items-center gap-1.5 font-semibold text-wait">
-              <TriangleAlert className="size-3.5" aria-hidden /> What we don&apos;t know
+          <div className="rounded-lg bg-human-soft p-3 text-[12px] ring-1 ring-human/20">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-human uppercase">
+              <X className="size-3.5" aria-hidden /> Rejected
             </p>
-            <p className="mt-1">Japan: thin sample (n = 14). EU and CN signals conflict.</p>
+            <p className="mt-1 font-medium text-ink">Paid subscription for heated seats</p>
+            <p className="mt-0.5 text-ink-soft">“Customers read it as a hidden cost.”</p>
+            <p className="mt-1.5 text-[11px] text-muted">Product manager · 12 Oct, 14:05</p>
           </div>
+
+          <span className="mt-auto inline-flex h-9 items-center justify-center gap-2 rounded-full bg-ink px-4 text-[13px] font-medium text-white">
+            <Download className="size-4" aria-hidden /> Download PDF
+          </span>
         </aside>
       </div>
-    </div>
+    </figure>
   );
 }

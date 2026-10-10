@@ -14,7 +14,7 @@ export function MarketPicker() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Step 1 of 2</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Step 1 of 3</p>
       <h1 id="picker-heading" className="mt-2 text-center text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
         Which market are you deciding for?
       </h1>

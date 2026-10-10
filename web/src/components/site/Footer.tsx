@@ -6,6 +6,7 @@ import { ContactForm } from "./ContactForm";
 
 const LINKS = [
   { href: "#process", label: "Process" },
+  { href: "#cars", label: "Cars" },
   { href: "#product", label: "Product" },
   { href: "/dashboard", label: "Dashboard" },
 ];

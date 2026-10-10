@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Plus, SlidersHorizontal } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { UserMenu } from "./UserMenu";
 
-/** Minimal app bar: logo home, section label, sample-data badge. */
+/** App bar: logo, Dashboard, the one "New analysis" button, and who is deciding. */
 export function TopBar() {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
@@ -10,7 +12,16 @@ export function TopBar() {
           <Logo size={26} />
         </Link>
         <span aria-hidden className="h-5 w-px bg-line" />
-        <span className="text-sm font-medium text-ink-soft">Dashboard</span>
+        <Link href="/dashboard" className="text-sm font-medium text-ink-soft hover:text-ink">
+          Dashboard
+        </Link>
+        <Link href="/dashboard/new" className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-sm font-medium text-white shadow-card hover:bg-brand-deep">
+          <Plus aria-hidden className="size-4" /> New analysis
+        </Link>
+        <Link href="/dashboard/settings" aria-label="Settings" title="Scoring settings" className="flex size-9 items-center justify-center rounded-full text-ink-soft ring-1 ring-line hover:bg-bg-soft hover:text-ink">
+          <SlidersHorizontal aria-hidden className="size-4" />
+        </Link>
+        <UserMenu />
       </div>
     </header>
   );

@@ -27,6 +27,9 @@
   --bad: #d93025;    --bad-soft: #fce8e6;     /* negative comment / rejected */
   --wait: #b26b00;   --wait-soft: #fdf2df;
 
+  /* chart series (categorical, fixed order; validated for colour-blind separation) */
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a;
+
   /* markets */
   --eu: #1c69d4; --cn: #e0483a; --us: #0f3d75; --jp: #7c5cd6;
 
@@ -54,6 +57,7 @@
   --color-good: var(--good); --color-good-soft: var(--good-soft);
   --color-bad: var(--bad); --color-bad-soft: var(--bad-soft);
   --color-wait: var(--wait); --color-wait-soft: var(--wait-soft);
+  --color-series-1: var(--series-1); --color-series-2: var(--series-2); --color-series-3: var(--series-3);
   --color-eu: var(--eu); --color-cn: var(--cn); --color-us: var(--us); --color-jp: var(--jp);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -71,3 +75,16 @@ body {
 }
 ::selection { background: var(--brand-soft); color: var(--brand-deep); }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+
+/* Print: only the profile report (Download PDF uses the browser's Save as PDF). */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body * { visibility: hidden; }
+  [data-print-root], [data-print-root] * { visibility: visible; }
+  [data-print-root] { position: absolute; inset: 0 auto auto 0; width: 100%; }
+  [data-no-print] { display: none !important; }
+  [data-print-only] { display: block !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-shadow: none !important; }
+  section, li, tr { break-inside: avoid; }
+}
+[data-print-only] { display: none; }

@@ -65,14 +65,14 @@ vercel login
 cd web && vercel link                  # project root = web/
 vercel env pull .env.local             # pull env vars for local dev
 ```
-Set the Vercel project's **Root Directory** to `web`.
+Set the Vercel project's **Root Directory** to `web`. The project is **`dixi`**; pushes to `main` deploy to production at https://dixi-wheat.vercel.app.
 
 ## 4. Environment variables
 Each part has a template. Copy it and fill in the values; the copies are git-ignored.
 
 | Template | Copy to | Contains |
 |---|---|---|
-| [`web/.env.example`](../web/.env.example) | `web/.env.local` | Public values only: site URL, backend API URL, Supabase URL + publishable key |
+| [`web/.env.example`](../web/.env.example) | `web/.env.local` | Public values (site URL, backend API URL, Supabase URL + publishable key) and the server-only `OPENAI_API_KEY` for `/api/scoring-advice` |
 | [`backend/.env.example`](../backend/.env.example) | `backend/.env` | Server secrets: OpenAI key and model names, Supabase service role key, database URL, CORS, optional Logfire / fal.ai keys |
 | — | repo-root `.env` | `OPENAI_API_KEY` for `scripts/generate-image.mjs` (optional `OPENAI_IMAGE_MODEL`) |
 

@@ -1,3 +1,8 @@
+# Hackathon build plan
+
+The hackathon build plan, prioritised by the judging criteria.
+
+```mermaid
 gantt
   title Dixi 30-hour build (Sat 10 Oct, 14:00 to Sun 11 Oct, ~20:00)
   dateFormat YYYY-MM-DD HH:mm
@@ -23,3 +28,4 @@ gantt
   One illustrative concept image, labelled AI concept      :f1, 2026-10-11 14:00, 1h
   section Pitch
   Demo script · rehearsal · backup video                   :g1, 2026-10-11 15:00, 5h
+```

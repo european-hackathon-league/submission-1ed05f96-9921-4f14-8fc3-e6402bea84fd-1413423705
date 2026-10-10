@@ -1,0 +1,29 @@
+{
+  "file": "g70-comfort.webp",
+  "ai_generated": true,
+  "label": "AI concept",
+  "prompt": "Photorealistic editorial automotive photograph for a social media post, square composition, cinematic natural light, shallow depth of field, premium modern German car design language. Strictly: no logos, no brand badges, no emblems on the grille or wheels, no text, no letters, no license plates, no recognisable faces (people only from behind, as silhouettes or hands). The car: a large modern luxury limousine with a tall upright front, in deep dark blue. Scene: Golden-hour countryside road; interior close-up of finely stitched light leather seats, open-pore wood trim, soft ambient lighting and a panoramic glass roof with sky above. Mood: quiet, crafted, arriving rested.",
+  "revised_prompt": null,
+  "model": "gpt-image-2.5-flare",
+  "endpoint": "images/generations",
+  "references": [],
+  "size": "1024x1024",
+  "actual_dimensions": "1024x1024",
+  "quality": "medium",
+  "background": "default",
+  "usage": {
+    "input_tokens": 145,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 145
+    },
+    "output_tokens": 439,
+    "output_tokens_details": {
+      "image_tokens": 439,
+      "text_tokens": 0
+    },
+    "total_tokens": 584
+  },
+  "created": "2026-10-10T20:54:53.640Z",
+  "modified": "resized to 900 px, converted to WebP"
+}

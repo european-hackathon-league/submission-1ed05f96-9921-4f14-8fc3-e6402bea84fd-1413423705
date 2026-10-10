@@ -1,45 +1,38 @@
-import { BookOpen, GitBranch, LayoutDashboard, ListChecks, SlidersHorizontal } from "lucide-react";
 import type { ComponentType } from "react";
 
-type NavItem = { label: string; icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>; active?: boolean };
+export type NavItem = {
+  id: string;
+  label: string;
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  /** Small count or dot next to the label. */
+  badge?: React.ReactNode;
+};
 
-const NAV: NavItem[] = [
-  { label: "Overview", icon: LayoutDashboard, active: true },
-  { label: "Requirements", icon: ListChecks },
-  { label: "Lineage", icon: GitBranch },
-  { label: "Weights", icon: SlidersHorizontal },
-  { label: "Memory", icon: BookOpen },
-];
-
-/** Section nav: a slim sidebar on desktop, a scrollable tab row on small screens. Only Overview exists for now. */
-export function Sidebar() {
+/** Section nav: a slim sidebar on desktop, a scrollable tab row on small screens.
+ *  Shown once the pipeline has built profiles (profiles dashboard). */
+export function Sidebar({ items, active, onSelect, label = "Dashboard sections" }: { items: NavItem[]; active: string; onSelect: (id: string) => void; label?: string }) {
   return (
-    <nav aria-label="Dashboard sections" className="border-b border-line lg:w-52 lg:shrink-0 lg:border-b-0 lg:border-r lg:py-6">
-      <ul className="flex gap-1 overflow-x-auto px-4 py-2 sm:px-6 lg:flex-col lg:px-3 lg:py-0">
-        {NAV.map(({ label, icon: Icon, active }) => (
-          <li key={label} className="shrink-0">
-            {active ? (
-              <span
-                aria-current="page"
-                className="flex items-center gap-2.5 rounded-lg bg-brand-soft px-3 py-2 text-sm font-medium text-brand-deep"
+    <nav aria-label={label} className="border-b border-line lg:w-52 lg:shrink-0 lg:border-b-0 lg:border-r lg:pr-3">
+      <ul className="flex gap-1 overflow-x-auto py-2 lg:flex-col lg:py-0">
+        {items.map(({ id, label, icon: Icon, badge }) => {
+          const on = id === active;
+          return (
+            <li key={id} className="shrink-0">
+              <button
+                type="button"
+                aria-current={on ? "page" : undefined}
+                onClick={() => onSelect(id)}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  on ? "bg-brand-soft font-medium text-brand-deep" : "text-ink-soft hover:bg-bg-soft hover:text-ink"
+                }`}
               >
                 <Icon aria-hidden className="size-4" />
                 {label}
-              </span>
-            ) : (
-              <span
-                aria-disabled="true"
-                title="Coming soon"
-                className="flex cursor-default items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted/70"
-              >
-                <Icon aria-hidden className="size-4" />
-                {label}
-                <span className="hidden text-[0.65rem] uppercase tracking-wide text-muted/60 lg:ml-auto lg:inline">Soon</span>
-                <span className="sr-only">(coming soon)</span>
-              </span>
-            )}
-          </li>
-        ))}
+                {badge !== undefined && <span className="ml-auto text-xs tabular-nums text-muted">{badge}</span>}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

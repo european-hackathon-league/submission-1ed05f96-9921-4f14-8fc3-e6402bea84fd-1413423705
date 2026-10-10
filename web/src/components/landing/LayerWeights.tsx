@@ -1,32 +1,39 @@
-/* Three-layer model with illustrative default weight shares per model. */
+/* Three-layer model with illustrative default weight shares per model (same split the pipeline uses:
+ * L3 is fixed per series, L1 takes 45% of the rest, L2 the remainder). */
 
 const LAYERS = [
   {
     key: "L1",
-    name: "Principles",
-    line: "Hard rules per market, owned by managers. Example: in Japan, the car must fit multi-storey car parks.",
+    name: "BMW principles",
+    line: "The fundamentals the car must respect, owned by managers. Example: the 7 Series puts rear-seat comfort first.",
     bar: "bg-l1 text-white",
     chip: "bg-l1-soft text-l1",
   },
   {
     key: "L2",
-    name: "Evidence",
-    line: "Customer studies, owner feedback, sales and quality reports. The main engine.",
+    name: "Market evidence",
+    line: "Customers, competitors and trends: feedback, studies, sales, today's option list and researched sources. The main engine.",
     bar: "bg-l2 text-white",
     chip: "bg-l2-soft text-l2",
   },
   {
     key: "L3",
-    name: "Signals",
-    line: "Social media, search trends and concept tests. Low weight, tuned per model.",
-    bar: "bg-l3 text-brand-deep",
+    name: "Social test",
+    line: "How the finished profiles do when posted. A low-weight tie-breaker, tuned per model.",
+    bar: "bg-l3 text-ink",
     chip: "bg-l3-soft text-brand-deep",
   },
 ] as const;
 
+const split = (l3: number): [number, number, number] => {
+  const l1 = Math.round(45 * (1 - l3 / 100));
+  return [l1, 100 - l1 - l3, l3];
+};
+
 const MODELS = [
-  { name: "7 Series", note: "Signals barely count", weights: [55, 43, 2] },
-  { name: "1 Series", note: "Younger buyers, more signal", weights: [45, 35, 20] },
+  { name: "7 Series", note: "Social test barely counts", weights: split(2) },
+  { name: "5 Series", note: "A light nudge", weights: split(8) },
+  { name: "1 Series", note: "Younger buyers, more say", weights: split(20) },
 ];
 
 export function LayerWeights() {
@@ -47,17 +54,19 @@ export function LayerWeights() {
         </ul>
       </div>
 
-      <div className="flex flex-col justify-center gap-8">
+      <div className="flex flex-col justify-center gap-7">
         {MODELS.map((m) => (
           <figure key={m.name}>
             <figcaption className="mb-2.5 flex items-baseline justify-between gap-3 text-sm">
               <span className="font-semibold text-ink">{m.name}</span>
-              <span className="text-muted">{m.note}</span>
+              <span className="text-muted">
+                {m.note} · <span className="font-medium text-ink-soft tabular-nums">L3 {m.weights[2]}%</span>
+              </span>
             </figcaption>
             <div
-              className="flex h-12 overflow-hidden rounded-xl ring-1 ring-line"
+              className="flex h-11 overflow-hidden rounded-xl ring-1 ring-line"
               role="img"
-              aria-label={`${m.name} default weights: principles ${m.weights[0]}%, evidence ${m.weights[1]}%, signals ${m.weights[2]}%`}
+              aria-label={`${m.name} default weights: principles ${m.weights[0]}%, market evidence ${m.weights[1]}%, social test ${m.weights[2]}%`}
             >
               {LAYERS.map((l, i) => (
                 <div
@@ -65,7 +74,7 @@ export function LayerWeights() {
                   className={`${l.bar} flex min-w-1 items-center justify-center text-xs font-semibold`}
                   style={{ width: `${m.weights[i]}%` }}
                 >
-                  {m.weights[i] >= 8 && (
+                  {m.weights[i] >= 12 && (
                     <span>
                       {l.key} · {m.weights[i]}%
                     </span>
@@ -73,10 +82,9 @@ export function LayerWeights() {
                 </div>
               ))}
             </div>
-            {m.weights[2] < 8 && <p className="mt-1.5 text-right text-xs text-muted">L3 · {m.weights[2]}%</p>}
           </figure>
         ))}
-        <p className="text-xs text-muted">Default weight shares. Managers can tune them per model.</p>
+        <p className="text-xs text-muted">Illustrative default shares. Managers can tune them per model.</p>
       </div>
     </div>
   );

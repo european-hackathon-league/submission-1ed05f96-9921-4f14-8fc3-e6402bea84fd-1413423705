@@ -7,6 +7,7 @@ import { ButtonLink } from "./ButtonLink";
 
 const LINKS = [
   { href: "#process", label: "Process" },
+  { href: "#cars", label: "Cars" },
   { href: "#product", label: "Product" },
   { href: "#contact", label: "Contact" },
 ];

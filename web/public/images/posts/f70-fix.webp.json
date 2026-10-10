@@ -1,0 +1,29 @@
+{
+  "file": "f70-fix.webp",
+  "ai_generated": true,
+  "label": "AI concept",
+  "prompt": "Photorealistic editorial automotive photograph for a social media post, square composition, cinematic natural light, shallow depth of field, premium modern German car design language. Strictly: no logos, no brand badges, no emblems on the grille or wheels, no text, no letters, no license plates, no recognisable faces (people only from behind, as silhouettes or hands). The car: a modern compact premium five-door hatchback in metallic grey. Scene: Early morning city street in soft sunrise light; inside view over the driver's shoulder: a phone resting on the wireless charging pad connects instantly, clear simple physical climate buttons, a calm uncluttered dashboard. Mood: everyday reliability, relief, calm start of the day.",
+  "revised_prompt": null,
+  "model": "gpt-image-2.5-flare",
+  "endpoint": "images/generations",
+  "references": [],
+  "size": "1024x1024",
+  "actual_dimensions": "1024x1024",
+  "quality": "medium",
+  "background": "default",
+  "usage": {
+    "input_tokens": 152,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 152
+    },
+    "output_tokens": 439,
+    "output_tokens_details": {
+      "image_tokens": 439,
+      "text_tokens": 0
+    },
+    "total_tokens": 591
+  },
+  "created": "2026-10-10T20:53:06.848Z",
+  "modified": "resized to 900 px, converted to WebP"
+}

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # keep the example file (template, no secrets)
 !.env.example
+
+# local BMW-derived data (never commit)
+/data-local/

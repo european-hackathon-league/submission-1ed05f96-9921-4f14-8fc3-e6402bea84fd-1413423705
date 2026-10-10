@@ -5,6 +5,10 @@
 <p align="center"><b>Hear every market. Decide with a reason.</b></p>
 
 <p align="center">
+  <a href="https://dixi-wheat.vercel.app"><img alt="Live: dixi-wheat.vercel.app" src="https://img.shields.io/badge/Live-dixi--wheat.vercel.app-1c69d4?logo=vercel&logoColor=white&style=for-the-badge"></a>
+</p>
+
+<p align="center">
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
@@ -23,32 +27,31 @@
 
 ## How Dixi thinks: three layers
 
-Not every signal counts the same. Dixi sorts everything it hears into three layers, from strongest to weakest.
+Not every input counts the same. Dixi sorts what it knows into three layers, from strongest to weakest.
 
 | | Layer | What goes in | How much it counts |
 |---|---|---|---|
-| 🟦 | **L1 · Principles** | Hard rules per market, owned by a named manager. *Example: "In Japan, the car must fit multi-storey car parks."* | Strongest. A requirement that breaks a principle is flagged. |
-| 🔵 | **L2 · Evidence** | Customer studies, owner feedback, sales, quality reports. | The main engine. Weighted by how reliable each source is. |
-| 🩵 | **L3 · Signals** | Social media, search trends, concept tests. | Weakest. A tie-breaker, never the decider. |
+| 🟦 | **L1 · BMW principles** | The fundamentals of each series, owned by named managers. *Example: "The 7 Series puts rear-seat luxury first."* | Strongest. Every profile is checked against them. |
+| 🔵 | **L2 · Market evidence** | Customer feedback and feature requests, customer studies, sales, today's option list. A research agent adds competitor features people like and market trends, each with its sources. | The main engine. |
+| 🩵 | **L3 · Social test** | Runs only after profiles exist: which generated profile tracks better on social media (simulated for now). | Weakest, and set per series: 7 Series 2 %, 5 Series 8 %, 1 Series 20 %. |
 
-## From a comment to a requirement, in five steps
+## From customer voice to car profiles, in five steps
 
-1. **Listen.** Collect what customers say, market by market.
-2. **Sort.** Put each piece into its layer: principle, evidence or signal.
-3. **Weigh.** Each car has its own weights. Social media matters more for a young buyer's 1 Series than for a 7 Series.
-4. **Decide.** AI drafts the requirement with a measurable target. A product manager **keeps, edits, postpones or rejects** it, and always gives a reason.
-5. **Remember.** Every decision is saved with its evidence. Anyone can trace a requirement back to the comments behind it, years later.
+1. **Choose.** Pick a market on the globe, then a series (1, 5 or 7).
+2. **Analyse.** AI reads the BMW principles and the market evidence, and builds one list of feature requests by category (Exterior, Interior, Digital, Powertrain) and urgency.
+3. **Decide.** The product manager **keeps or rejects** each request (a reject always needs a reason), drags the list into priority order, and stars competitor features or trends onto a wishlist. Every decision records who and when.
+4. **Build.** Dixi builds three car profiles (*Fix the basics*, *Tech-forward*, *Comfort & craft*) that follow the PM's priority. Each one exports as a catalogue-style PDF.
+5. **Remember.** Each build is saved as a **generation** with its profiles, decisions and priority. Run the social test (L3) on it, or edit and rebuild.
 
 ```mermaid
 flowchart LR
-  A[Customer comments<br/>in every market] --> B{Sort into layers}
-  B --> L1[L1 Principles]
-  B --> L2[L2 Evidence]
-  B --> L3[L3 Signals]
-  L1 & L2 & L3 --> W[Weigh per model]
-  W --> D[AI drafts<br/>the requirement]
-  D --> H{{Product manager<br/>keeps · edits · postpones · rejects}}
-  H --> M[(Decision memory<br/>with the reason)]
+  M[Market + series] --> A[AI analysis<br/>L1 principles · L2 evidence<br/>+ research agent]
+  A --> H{{Product manager<br/>keep · reject with reason<br/>priority · wishlist}}
+  H --> P[3 car profiles<br/>follow the PM's priority]
+  P --> G[(Generation<br/>profiles · decisions · who · when)]
+  G --> S[L3 social test<br/>low weight]
+  S -. "updates scores" .-> G
+  G -. "edit and rebuild" .-> H
 ```
 
 **Dixi is honest about what it doesn't know.** Missing markets, thin samples and conflicting signals are shown to the product manager, not hidden.
@@ -61,17 +64,17 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000. Full setup (Supabase CLI, Vercel, Entire): [`docs/requirements.md`](docs/requirements.md).
+Open http://localhost:3000, or see it live at **https://dixi-wheat.vercel.app**. Full setup (Supabase CLI, Vercel, Entire): [`docs/requirements.md`](docs/requirements.md).
 
 ## What's in the repo
 
 | Folder | What |
 |---|---|
-| [`web/`](web/) | The app: landing page with a live market globe, and the dashboard |
+| [`web/`](web/) | The app: landing page with a live market globe, the requirement pipeline and the generations dashboard |
 | [`backend/`](backend/) | API and AI agents (planned) |
 | [`docs/`](docs/) | Setup, architecture diagrams, tech stack |
 | [`branding/`](branding/) | Logo, colours, brand guide |
-| [`scripts/`](scripts/) | Image generation |
+| [`scripts/`](scripts/) | Image generation, and the local data build for the pipeline |
 
 ---
 
