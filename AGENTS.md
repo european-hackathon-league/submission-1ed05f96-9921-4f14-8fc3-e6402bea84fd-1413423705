@@ -37,7 +37,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 - **Challenge:** derive, justify and prioritise customer requirements for a BMW successor vehicle (1/5/7 Series; Europe, China, USA; 3–5 years ahead). The product manager stays in control, every decision is traceable, evidence and assumptions stay separate, and conflicts are shown, not averaged away.
 - **Judging rubric:** decision and scoring logic · workflow and human decisions · traceability and auditability (incl. postponements) · quality, usability and feasibility · innovation, scale and business impact · plus "we reward honesty" (surface missing evidence, conflicts and uncertainty). Logic, workflow and traceability come first when deciding what to build.
 - **Product: Dixi**, named after the Dixi 3/15, BMW's first car (1928). A principled, weighted, traceable requirement engine: three layers (L1 principles, L2 evidence, L3 signals), source weights per model, human gates G1–G4, an editable decision memory, lineage from comment to requirement, and "what we don't know" gap cards. Architecture: `docs/architecture/`.
-- **Mandatory:** the repo must use **Entire** (entire.io): `entire enable --agent claude-code`, connect the repo on entire.io, turn on Runners and Trails. Submissions without Entire are rejected. If the repo is public, agent transcripts are public too: never paste secrets into a session.
+- **Mandatory:** the repo must use **Entire** (entire.io): `entire enable --agent claude-code`, connect the repo on entire.io, turn on Runners and Trails. Submissions without Entire are rejected. Agent transcripts are uploaded on push (and are public if the repo is public): never paste secrets into a session. Work goes through trails (§5).
 
 ## 3. Repo map
 **Only these paths are committed.** `.gitignore` is an allow-list: everything else at the root stays local.
@@ -71,13 +71,26 @@ The user has set these up. Use them to answer your own questions before asking, 
 
 ### Entire: code history and the reasoning behind it
 Entire is the source of truth for its own flags: run `entire agent-help`, then `entire agent-help <command>`. The repo is auto-detected (`gh/peresramirez/Dixi`); never ask the user for it.
-- **Before changing code you don't understand**, look up why it exists:
-  - `entire why <file>:<line>` shows the commit, checkpoint, prompt and session behind a line.
-  - `entire search "<question>" --compact` searches past checkpoints, commits and sessions (semantic + keyword).
-  - `entire checkpoint list` / `entire checkpoint explain <id|sha>` show what an earlier session did and why.
-  - `entire trail list` / `entire trail show` show trails, findings and approvals for a branch.
+
+**Ask Entire first.** Whenever you have a question about the code, the intent behind it, or a past decision (why something exists, what was tried, what was rejected, what the user asked for), consult the Entire CLI before guessing, asking the user, or "fixing" something that may be deliberate:
+- `entire why <file>:<line>` shows the commit, checkpoint, prompt and session behind a line.
+- `entire search "<question>" --compact` searches past checkpoints, commits and sessions (semantic + keyword). Filters: `author:`, `date:week|month`, `branch:`.
+- `entire checkpoint explain <id|sha>` (add `--full` for the transcript) shows what an earlier session did and why; `entire checkpoint list` lists them.
+- `entire trail list` / `entire trail show` show trails with their description (the intent), findings and approvals.
+Quote what you found (checkpoint or commit id) when it shapes your change, so the reasoning stays traceable.
+
+**Work in trails: one intent → one trail → one branch.**
+1. Start on a new branch from `main`: `git switch -c <short-name>`. Never commit feature work straight to `main`.
+2. Make the change in small commits, each about one thing, so `entire why` can point to the exact prompt behind a line.
+3. Push the branch, then create the trail for it: `entire trail create --branch <short-name> --title "…" --type feature|bug|task --body "<problem, intended outcome, constraints>"`. A trail needs commits ahead of `main` (an empty branch is rejected with 422).
+4. Runners (Summary, Review, Risk, Confidence, Security, Drift; config in `.entire/runners/`) review every push. Read the findings with `entire trail show` and fix, resolve or dismiss them.
+5. Approval and merge happen on the trail (entire.io), backed by a GitHub PR. Prefer a **merge commit** over squash, so every commit keeps its `Entire-Checkpoint` link and the intent survives the merge. Merging `main` deploys to production (Vercel).
+6. When a change implements a Dixi product decision, put the Dixi generation and decision ID in the trail description, so code traces back to the product decision.
+
+**Other rules**
 - **Commits capture the session automatically.** Never create checkpoints by hand; just commit normally (and follow §4: no AI attribution).
-- **Leave to the user:** `enable`, `disable`, `configure`, `clean`, `auth`, `login`, `logout`, `agent`, `grant`, `org`, `plugin`. **Never run `entire import`.** Session upload on push is turned off locally on purpose; don't turn it on.
+- **Session upload is on** (`push_sessions: true` in `.entire/settings.local.json`): pushes upload the agent transcript to Entire. So never paste or print secrets in a session; if one leaks, redact it from the transcript before the next commit or push.
+- **Leave to the user:** `enable`, `disable`, `configure`, `clean`, `auth`, `login`, `logout`, `agent`, `grant`, `org`, `plugin`. **Never run `entire import`.**
 
 ### Supabase CLI: database (backend)
 - Installed (`supabase --version`, v2.107). The project isn't initialised yet: `supabase init` creates `supabase/` (config + migrations), which then needs `!/supabase/` in `.gitignore`.
