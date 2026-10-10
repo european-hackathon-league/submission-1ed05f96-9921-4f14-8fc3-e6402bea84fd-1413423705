@@ -39,3 +39,11 @@ Learn more
   This key only works in the PersonalProjects workspace and can’t use the Admin API.
 
  ??
+
+---
+
+i setup a new apikey also i saved inside .env for you to test out .
+
+---
+
+variable CLAUDE_API_KEY
