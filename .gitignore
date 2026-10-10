@@ -13,6 +13,11 @@
 !/docs/
 !/branding/
 !/scripts/
+# Entire (entire.io): shared settings, runners and agent hooks are committed; personal settings are not
+!/.entire/
+!/.claude/
+/.entire/settings.local.json
+/.claude/settings.local.json
 
 # ---------- Never commit, anywhere (safety net) ----------
 # secrets
