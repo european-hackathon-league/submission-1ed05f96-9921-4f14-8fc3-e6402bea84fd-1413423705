@@ -1,0 +1,13 @@
+i will do it in entire
+
+---
+
+[Image #18] stopped there, analyze it, use claude chrome
+
+---
+
+i added openapi key, what is the next step? because i want to use claude code here locally, then for findings openai n entire
+
+---
+
+ok, i will find a key
