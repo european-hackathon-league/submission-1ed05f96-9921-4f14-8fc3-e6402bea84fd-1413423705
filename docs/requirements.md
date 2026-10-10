@@ -29,8 +29,10 @@ Everything you need to work on the Dixi repo. Commands are for macOS (Homebrew);
 git clone git@github.com:peresramirez/Dixi.git
 cd Dixi
 
-# secrets (repo root, git-ignored)
+# secrets (all git-ignored)
 printf 'OPENAI_API_KEY=<ask the team>\n' > .env
+cp web/.env.example web/.env.local
+cp backend/.env.example backend/.env
 
 # web app
 cd web && pnpm install && pnpm dev     # http://localhost:3000
@@ -66,14 +68,19 @@ vercel env pull .env.local             # pull env vars for local dev
 Set the Vercel project's **Root Directory** to `web`.
 
 ## 4. Environment variables
-| Variable | Where | Used by |
-|---|---|---|
-| `OPENAI_API_KEY` | repo-root `.env` | `scripts/generate-image.mjs`, backend agents |
-| `OPENAI_IMAGE_MODEL` *(optional)* | repo-root `.env` | image script model override |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` *(planned)* | `web/.env.local` / Vercel | web app → Supabase |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` *(planned)* | backend `.env` | backend → Supabase (server only, never in the browser) |
+Each part has a template. Copy it and fill in the values; the copies are git-ignored.
 
-All `.env*` files are git-ignored.
+| Template | Copy to | Contains |
+|---|---|---|
+| [`web/.env.example`](../web/.env.example) | `web/.env.local` | Public values only: site URL, backend API URL, Supabase URL + publishable key |
+| [`backend/.env.example`](../backend/.env.example) | `backend/.env` | Server secrets: OpenAI key and model names, Supabase service role key, database URL, CORS, optional Logfire / fal.ai keys |
+| — | repo-root `.env` | `OPENAI_API_KEY` for `scripts/generate-image.mjs` (optional `OPENAI_IMAGE_MODEL`) |
+
+```bash
+cp web/.env.example web/.env.local
+cp backend/.env.example backend/.env
+```
+Never put a secret in a `NEXT_PUBLIC_*` variable: those reach the browser. On Vercel, set the same variables in the project settings.
 
 ## 5. Daily commands
 | Task | Command |
@@ -86,7 +93,7 @@ All `.env*` files are git-ignored.
 | Deploy a preview | `cd web && vercel` |
 
 ## 6. Repo rules (short)
-- Only `web/`, `backend/`, `docs/`, `branding/`, `scripts/`, `AGENTS.md`, `CLAUDE.md` are committed (`.gitignore` is an allow-list).
+- Only `web/`, `backend/`, `docs/`, `branding/`, `scripts/`, `README.md`, `AGENTS.md`, `CLAUDE.md` are committed (`.gitignore` is an allow-list).
 - No customer data, private documents or secrets in the repo.
 - Next.js 16 has breaking changes: read `web/AGENTS.md` before using a Next.js API.
 - Full agent rules: `AGENTS.md`.

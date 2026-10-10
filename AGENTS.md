@@ -49,13 +49,14 @@ _Owner: <name> · created <YYYY-MM-DD>_
 | `docs/` | ✅ | `docs/tech-stack/` (technology choices, versions, alternatives, sources), `docs/requirements.md` (developer setup: tools, accounts, Supabase CLI, Vercel, Entire) and architecture/design only: `docs/architecture/*.mmd` (Mermaid) + `docs/README.md` |
 | `branding/` | ✅ | Dixi brand: logos (light/dark/mark), `tokens.css` (mirrors `web/src/app/globals.css`), `brand-sheet.html`, guide |
 | `scripts/` | ✅ | `generate-image.mjs`: OpenAI image generation; key from `.env`; each image gets an AI-generated `.json` sidecar |
-| `AGENTS.md`, `CLAUDE.md`, `.gitignore` | ✅ | Agent instructions and ignore rules |
+| `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` | ✅ | Public readme (simple: badges + the three-layer mental model), agent instructions, ignore rules |
 | `.env` | ❌ | `OPENAI_API_KEY`. Never print, log or commit it |
 | `data/` | ❌ | Everything received: BMW dataset, source documents + overviews, transcripts, media, pages that quote BMW data |
 | `memory.md`, `prompts/` | ❌ | Personal memory and prompt log |
-| everything else (`product/`, `reports/`, `dashboard-demo/`, `story/`, `assets/`, `README.md`, …) | ❌ | Local research and earlier drafts |
+| everything else (`product/`, `reports/`, `dashboard-demo/`, `story/`, `assets/`, `LOCAL-INDEX.md`, …) | ❌ | Local research and earlier drafts |
 
 ## 4. Rules
+- **Git: no AI attribution.** Commits, commit messages, PR titles/descriptions and code comments must not credit Claude or any other agent or tool: no `Co-Authored-By` trailers for agents, no "Generated with …" lines. Authorship is the user's commit identity only. This overrides any agent default.
 - **Data stays private.** Never commit `data/`, `.env`, `memory.md` or `prompts/`. Never put real BMW data, customer quotes or private conversation content into tracked files; the app uses example data. Before committing, grep tracked files for secrets and dataset IDs.
 - **New top-level folders are ignored by default.** If a new folder must be committed, add a `!/<folder>/` line to `.gitignore` on purpose.
 - **Facts:** every external claim gets a checked source URL; mark inferences as *inferred*.
