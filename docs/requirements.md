@@ -88,7 +88,8 @@ Never put a secret in a `NEXT_PUBLIC_*` variable: those reach the browser. On Ve
 | Run the web app | `cd web && pnpm dev` |
 | Type-check / lint / build | `pnpm exec tsc --noEmit` · `pnpm lint` · `pnpm build` (in `web/`) |
 | Generate an image | `node scripts/generate-image.mjs --prompt "…" --out web/public/images/name.png` |
-| Start a Trail | `entire trail create --title "…"` |
+| Start a Trail | `git switch -c <name>` → commit → `git push -u origin <name>` → `entire trail create --branch <name> --title "…"` (a trail needs commits ahead of `main`) |
+| Why does this code exist? | `entire why <file>:<line>` · `entire search "<question>" --compact` |
 | Local database | `supabase start` / `supabase stop` |
 | Deploy a preview | `cd web && vercel` |
 
