@@ -10,7 +10,8 @@
     "sandbox": {
       "base_template": "claude",
       "repo_token": "read"
-    }
+    },
+    "model": "sonnet"
   },
   "automation": {
     "kind": "trail_prompt"
