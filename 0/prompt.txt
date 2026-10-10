@@ -1,0 +1,41 @@
+i will do it in entire
+
+---
+
+[Image #18] stopped there, analyze it, use claude chrome
+
+---
+
+i added openapi key, what is the next step? because i want to use claude code here locally, then for findings openai n entire
+
+---
+
+ok, i will find a key
+
+---
+
+ok, done, now what? i setup the keys
+
+---
+
+and it should use sonnet, or haiku? the new update of haiku looks really nice, can we change the models or its default set by entire?
+
+---
+
+is something wrong with the api key?
+
+---
+
+ok, [Image #19] so what is the proper way to setup the api key?   --> org ? 
+
+<pasted_content id="b3be">
+This key can be used for any Admin API endpoints the linked account has access to and any workspaces it is a member of.
+
+Because it isn’t tied to one workspace, requests outside the Admin API must include an anthropic-workspace-id header. 
+Learn more
+
+</pasted_content id="b3be">
+
+  This key only works in the PersonalProjects workspace and can’t use the Admin API.
+
+ ??
