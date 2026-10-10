@@ -15,7 +15,7 @@ Status as of 10 Oct 2026. ✅ = in use · 🟡 = planned · ⚪ = considered, no
 | Fonts | **Geist Sans / Geist Mono** via `next/font` | | Clean, free, ships with Next.js |
 | Tooling | pnpm 10, Node 26, ESLint 9 | | |
 
-Run it: `cd web && pnpm install && pnpm dev` → http://localhost:3000. Note: Next.js 16 has breaking changes; read `web/AGENTS.md`.
+Run it: `cd web && pnpm install && pnpm dev` → http://localhost:3000. Note: Next.js 16 has breaking changes; read `web/AGENTS.md` (from the repo root).
 
 ## Backend: `backend/` 🟡
 | Layer | Choice | Why | Alternatives |

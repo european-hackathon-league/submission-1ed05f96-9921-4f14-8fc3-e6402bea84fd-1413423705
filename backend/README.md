@@ -3,7 +3,7 @@
 Not built yet. This folder will hold the API and the AI agents behind the dashboard. Today the web app runs on typed sample data in `web/src/lib/`.
 
 ## Planned stack
-Python · **FastAPI** · **Pydantic AI** (agents with typed outputs) · **Supabase** (Postgres + pgvector) · **OpenAI**. Details and alternatives: `../tech-stack/README.md`. Architecture: `../docs/architecture/`.
+Python · **FastAPI** · **Pydantic AI** (agents with typed outputs) · **Supabase** (Postgres + pgvector) · **OpenAI**. Details and alternatives: `../docs/tech-stack/README.md`. Architecture: `../docs/architecture/`.
 
 ## Planned layout
 ```

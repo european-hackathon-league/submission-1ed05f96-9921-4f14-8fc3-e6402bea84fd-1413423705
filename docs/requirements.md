@@ -86,7 +86,7 @@ All `.env*` files are git-ignored.
 | Deploy a preview | `cd web && vercel` |
 
 ## 6. Repo rules (short)
-- Only `web/`, `backend/`, `docs/`, `tech-stack/`, `branding/`, `scripts/`, `AGENTS.md`, `CLAUDE.md` are committed (`.gitignore` is an allow-list).
+- Only `web/`, `backend/`, `docs/`, `branding/`, `scripts/`, `AGENTS.md`, `CLAUDE.md` are committed (`.gitignore` is an allow-list).
 - No customer data, private documents or secrets in the repo.
 - Next.js 16 has breaking changes: read `web/AGENTS.md` before using a Next.js API.
 - Full agent rules: `AGENTS.md`.

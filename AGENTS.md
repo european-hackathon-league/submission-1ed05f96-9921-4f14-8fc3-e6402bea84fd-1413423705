@@ -46,8 +46,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 |---|---|---|
 | `web/` | ✅ | **The Dixi app**: Next.js 16 (App Router), light mode. `/` landing (globe hero with market highlights and popping comments, process, product, contact), `/dashboard` (globe market picker), `/dashboard/[market]`. **Read `web/AGENTS.md`**: Next 16 has breaking changes; check `web/node_modules/next/dist/docs/` before using an API. Shared globe: `web/src/components/globe/MarketGlobe.tsx`. Data modules: `web/src/lib/markets.ts`, `web/src/lib/dashboard-data.ts` (example data, no real BMW data) |
 | `backend/` | ✅ | Planned API + agents (FastAPI, Pydantic AI, Supabase). See its README |
-| `docs/` | ✅ | `docs/requirements.md` (developer setup: tools, accounts, Supabase CLI, Vercel, Entire) and architecture/design only: `docs/architecture/*.mmd` (Mermaid) + `docs/README.md` |
-| `tech-stack/` | ✅ | Technology choices, versions, alternatives, sources |
+| `docs/` | ✅ | `docs/tech-stack/` (technology choices, versions, alternatives, sources), `docs/requirements.md` (developer setup: tools, accounts, Supabase CLI, Vercel, Entire) and architecture/design only: `docs/architecture/*.mmd` (Mermaid) + `docs/README.md` |
 | `branding/` | ✅ | Dixi brand: logos (light/dark/mark), `tokens.css` (mirrors `web/src/app/globals.css`), `brand-sheet.html`, guide |
 | `scripts/` | ✅ | `generate-image.mjs`: OpenAI image generation; key from `.env`; each image gets an AI-generated `.json` sidecar |
 | `AGENTS.md`, `CLAUDE.md`, `.gitignore` | ✅ | Agent instructions and ignore rules |
@@ -61,7 +60,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 - **New top-level folders are ignored by default.** If a new folder must be committed, add a `!/<folder>/` line to `.gitignore` on purpose.
 - **Facts:** every external claim gets a checked source URL; mark inferences as *inferred*.
 - **Images:** only images with a clear licence; AI-generated images get a visible "AI-generated" label in the UI (EU AI Act Art. 50) and a `.json` sidecar. Never generate BMW logos or real people.
-- **Stack:** Next.js + TypeScript + Tailwind (web), FastAPI + Pydantic AI + Supabase/pgvector + OpenAI (backend). Details: `tech-stack/README.md`.
+- **Stack:** Next.js + TypeScript + Tailwind (web), FastAPI + Pydantic AI + Supabase/pgvector + OpenAI (backend). Details: `docs/tech-stack/README.md`.
 - **Python:** `uv run --with <pkgs> python -I …`; don't install packages globally. **Node:** pnpm in `web/`.
 - **Output:** HTML deliverables are local files by default; publish claude.ai artifacts only when the user asks.
 - **Research:** prefer the exa MCP, tavily as a second opinion; keep query counts modest.

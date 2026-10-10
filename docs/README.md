@@ -17,4 +17,4 @@ Architecture and design of the Dixi app. Diagrams are [Mermaid](https://mermaid.
 ## Core ideas in one paragraph
 Dixi turns customer feedback from every market into requirements for the next BMW, and keeps the reason for every decision. Signals sit in three layers: **L1 principles** (hard rules per market, owned by people), **L2 evidence** (customer studies, owner feedback, sales, quality data) and **L3 signals** (social media, search trends, concept tests). Each model has its own weights: social signals count more for an entry model than for a flagship. AI drafts most requirements as SMART targets; a product manager keeps, edits, postpones or rejects each one at defined gates. Every decision is stored with its evidence snapshot, so anyone can trace a requirement back to the comments behind it. Dixi also shows what it doesn't know: missing markets, thin samples and conflicting signals.
 
-See also: `../tech-stack/` (technology choices) and `../backend/` (planned API and agents).
+See also: [`tech-stack/`](tech-stack/README.md) (technology choices, versions, alternatives) and `../backend/` (planned API and agents).
