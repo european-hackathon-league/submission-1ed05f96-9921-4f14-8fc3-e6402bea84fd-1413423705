@@ -8,7 +8,7 @@ Every decision (keep, reject with a reason, wishlist) is saved with **who** and 
 |---|---|---|
 | Demand | Customers asking in the chosen market, log-scaled against the top request | 60 % |
 | Market backing | Competitor features and trends (research agent) that support the request | 25 % |
-| Principle fit | The request's category matches the series' focus (BMW principles) | 15 % |
+| Principle fit | The **principle assessor**'s fit (0–1) of the request against the L1 principles; without an assessment, 1 if the category is in the series focus, else 0.4 | 15 % |
 
 ```
 base      = 100 × (wD·demand + wB·backing + wF·fit) / (wD + wB + wF)
@@ -30,7 +30,7 @@ A manager can write the rule instead of moving sliders, e.g. *"For the 7 Series,
 2. The route asks an OpenAI model (`gpt-6-luna`, then fallbacks) for **typed JSON** (strict schema): the proposed settings, one plain sentence per change, and a summary. Without an API key (e.g. a public deployment) it uses simple keyword rules instead.
 3. Every value is **clamped** to its allowed range (`clampSettings`). The model cannot set anything outside the limits.
 4. The manager sees **Now → Proposed** for each changed setting and clicks **Apply** or **Discard**. Nothing changes without that click.
-5. Each applied change goes to a **change log**: the instruction, who (name and role), when, AI model or rules, and the changes. Today it lives in localStorage (`dixi:scoring-log`); in the backend it becomes table `scoring_change`.
+5. Each applied change goes to a **change log**: the instruction, who (name and role), when, AI model or rules, and the changes. It is stored in Supabase (`scoring_changes`, via `PUT /settings`) with a copy in this browser (`dixi:scoring-log`). Slider moves are logged once they settle, with the before → after diff.
 
 Settings apply to every series and market today. Per-series settings are a natural next step: one `scoring_settings` row per series.
 
@@ -71,10 +71,10 @@ flowchart LR
 
 ## Today vs backend
 
-| | Today (prototype, `web/`) | Backend (planned, `backend/`) |
+| | Web (`web/`) | Backend (`backend/`, built) |
 |---|---|---|
-| Decisions | Saved with each generation in localStorage (`dixi:sessions`) | Table `decision` in Supabase, one row per decision, never overwritten |
-| Matching | Same series + same request title (`memoryKey`) | Same + pgvector similarity between a new cluster and past rejected requests, so a reworded request is still recognised |
-| Scoring | `web/src/lib/pipeline/scoring.ts` (`buildMemory`, `scoreRequest`) | Same rules in `backend/app/scoring/`, unit-tested against the web version |
-| Settings | `/dashboard/settings`, localStorage (`dixi:scoring`); natural-language proposals via `/api/scoring-advice`; change log `dixi:scoring-log` | Tables `scoring_settings` (per team, later per series) and `scoring_change` (instruction, proposal, applied by, at) |
-| AI agent | Not involved yet: the list is built by a script | The requirement agent calls `get_decision_memory(series, market)` before it proposes requests. Rule in its instructions: *do not propose a rejected request again unless it resurfaced; when you do, quote the old reason and show the demand change.* |
+| Decisions | Saved with each generation; local copy in `dixi:sessions` | Supabase `decisions` (append-only, undo is a row) and `generations`; memory is rebuilt from the stored generations, so a new browser sees the same memory |
+| Matching | Same series + same request title (`memoryKey`) | Same (`memory_key`). **Planned:** pgvector similarity, so a reworded request is still recognised |
+| Scoring | `web/src/lib/pipeline/scoring.ts` (`buildMemory`, `scoreRequest`; principle fit from the assessor) | Same rules in `backend/app/scoring.py`; `tests/test_scoring.py` pins it to numbers produced by the TypeScript code |
+| Settings | `/dashboard/settings`; natural-language proposals via `/api/scoring-advice`; local copy `dixi:scoring` | Supabase `scoring_settings` (one team row; per series later) and `scoring_changes` (instruction, source, before, after, who, when) |
+| AI agent | The list itself is built by a script | The **principle assessor** calls `get_decision_memory()` and reports past rejects (reason, resurfaced or not) next to its principle fit; it does not lower the fit for them, the score applies memory once. **Planned:** a requirement writer with the same tool |

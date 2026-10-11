@@ -17,14 +17,15 @@ flowchart TB
 
   subgraph LAY["② Layers L1 + L2"]
     direction LR
-    L1[("L1 · BMW principles<br/>per series · owner per principle")]
+    L1[("L1 · BMW principles (Supabase)<br/>series · market · Group<br/>owner + sources per principle")]
+    PA["Principle assessor (AI)<br/>fit per request · evidence vs assumptions<br/>conflicts · gaps"]
     RA["Research agent (backend, live)<br/>lead + competitor and trend scouts<br/>Tavily MCP · sources checked · gaps"]
     L2[("L2 · Market evidence<br/>feature requests · studies · sales<br/>option list · market signals")]
   end
 
   subgraph AN["③ AI analysis (per market + series)"]
     direction TB
-    CL["Cluster feedback into feature requests<br/>Exterior · Interior · Digital · Powertrain"]
+    CL["Group feedback into feature requests (data script)<br/>Exterior · Interior · Digital · Powertrain"]
     UR["Urgency<br/>how many customers ask, in this market"]
     LK["Link requests ↔ competitors / trends"]
   end
@@ -47,6 +48,9 @@ flowchart TB
   S2 --> RA --> L2
   S4 --> L1
   L2 --> CL --> UR --> LK
+  L1 --> PA
+  LK --> PA
+  PA -- "principle fit in the score" --> KP & RJ & PR & WL
   LK --> KP & RJ & PR & WL
   KP & RJ & WL -- "who · when · why" --> DM
   KP & PR & WL --> BU
@@ -70,7 +74,7 @@ flowchart TB
   class S1,S2 src
   class S4,KP,RJ,PR,WL human
   class CL,UR,LK auto
-  class RA,BU propose
+  class RA,BU,PA propose
   class L1 l1
   class L2 l2
   class L3 l3

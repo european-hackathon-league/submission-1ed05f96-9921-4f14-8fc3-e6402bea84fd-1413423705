@@ -1,130 +1,149 @@
-# Backend agents: the research workflow as built
+# Backend agents and storage, as built
 
-Status 11 Oct 2026, branch `backend-agents-tavily`. This page shows what the backend agents do today, which data goes where, and how it lines up with the architecture we designed ([`01`](01-system-overview.md), [`05`](05-hitl-map.md), [`07`](07-pm-workflow.md), [`09`](09-scoring-and-memory.md)). Code: `backend/` (see its README) and `web/src/lib/pipeline/research.ts`.
+Status 11 Oct 2026, branch `backend-agents-tavily`. This page shows what the backend does today: two agents, the Supabase store and the decision memory that links generations. It also shows which data goes where and how this lines up with the design ([`01`](01-system-overview.md), [`05`](05-hitl-map.md), [`07`](07-pm-workflow.md), [`09`](09-scoring-and-memory.md)). Code: `backend/` (see its README), `supabase/migrations/`, and on the web side `web/src/lib/api.ts` and `web/src/lib/pipeline/{principles,research,decision-log,sessions}.ts`.
 
-**In one sentence:** one agentic step is live, the **research agent** of layer L2. A lead researcher sends two scout sub-agents to search the public web through Tavily's MCP server. The backend checks every source against the real search results and drops the rest. It returns competitor features and market trends, linked to the PM's feature requests, plus a list of what it could not find. Everything else in the pipeline still runs in the web app, mostly as deterministic code.
+**In one paragraph:**
+- **Feature requests:** BMW's data becomes feature requests locally, through a deterministic script.
+- **Principle assessor (L1):** during the analysis it rates every request against BMW principles stored in Supabase (series fundamentals, market principles, Group principles). It cites principle ids, keeps evidence and assumptions apart, and lists conflicts and gaps. Its fit is the score's *principle fit*.
+- **Research agent (L2):** the PM can start it. Two scouts search the web through Tavily; every source is checked against the real search results.
+- **The PM:** keeps, rejects (with a reason), orders and wishlists.
+- **Storage:** every decision, build, agent run and settings change is stored in Supabase. The next analysis rebuilds **decision memory** from the stored generations, so a past reject lowers that request's score until demand grows past the resurface threshold.
 
-## 1. One research run, step by step
+## 1. One analysis, step by step
 
 ```mermaid
 sequenceDiagram
   autonumber
   actor PM as Product manager
-  participant UI as Web · SignalsPanel<br/>/dashboard/[market]/[series]
-  participant API as FastAPI<br/>POST /research/signals
-  participant Lead as lead_researcher<br/>(strong OpenAI model)
+  participant UI as Web · Pipeline<br/>/dashboard/[market]/[series]
+  participant API as FastAPI
+  participant PA as principle_assessor<br/>(strong OpenAI model)
+  participant DB as Supabase
+
+  PM->>UI: open Europe · 5 Series
+  UI->>API: GET /principles?market=EU&series=G60
+  API->>DB: series G60-P1…P3 + EU-xx + UK-xx + GL-xx (30)
+  UI->>API: POST /assess/principles<br/>requests: id · title · category · mention count · backing titles
+  API->>DB: principles for this scope
+  API->>PA: principles (statement · boundary · evidence · confidence) + requests
+  PA->>API: tool get_decision_memory()
+  API->>DB: generations → build_memory (same rules as scoring.ts)
+  API-->>PA: past keeps / rejects with reason, who, when, mentions then
+  PA-->>API: per request: fit 0–1 · supports · tensions · rationale · evidence · assumptions · memory<br/>+ conflicts + gaps
+  API->>API: verify: drop principle ids it was not given, report unassessed requests
+  API->>DB: principle_assessments (inputs + output + model)
+  API-->>UI: assessment
+  UI->>API: GET /generations · GET /decisions?series=G60&market=EU
+  API->>DB: earlier builds · decision history
+  UI->>UI: Dixi score = demand · backing · principle fit (assessor) → memory penalty / bonus
+  UI-->>PM: ranked list · principles panel (conflicts, gaps) · "Rejected · reason · who" badges
+```
+
+A fresh browser reuses the stored assessment when the request set is the same (`GET /assess/principles/latest`, matched on `requestIds`), so the agent is not called twice for the same input.
+
+## 2. Research agent (L2, started by the PM)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor PM as Product manager
+  participant UI as Web · SignalsPanel
+  participant API as POST /research/signals
+  participant Lead as lead_researcher<br/>(strong model)
   participant CS as competitor_scout<br/>(fast model)
   participant TS as trend_scout<br/>(fast model)
   participant TV as Tavily remote MCP<br/>tavily_search · tavily_extract
+  participant DB as Supabase
 
   PM->>UI: Run research agent
-  UI->>API: series · market · feature-request titles<br/>(+ optional focus, categories)
+  UI->>API: series · market · feature-request titles (+ focus, categories)
   API->>Lead: prompt (no customer data)
   par Harness SubAgents · delegate_task
-    Lead->>CS: competitors for 5 Series · Europe
-    CS->>TV: up to 6 searches (soft budget)
-    TV-->>CS: titles · URLs · snippets (URLs recorded)
+    Lead->>CS: competitors
+    CS->>TV: ≤ 6 searches (soft budget, URLs recorded)
     CS-->>Lead: signals + gaps (JSON)
   and
-    Lead->>TS: trends + regulation for 5 Series · Europe
-    TS->>TV: up to 6 searches
-    TV-->>TS: titles · URLs · snippets (URLs recorded)
+    Lead->>TS: trends + regulation
+    TS->>TV: ≤ 6 searches
     TS-->>Lead: signals + gaps (JSON)
   end
-  Lead->>Lead: merge · dedupe · pick the best ≤ max<br/>link relatesTo to exact request titles · list gaps
-  Lead-->>API: LeadOutput (typed)
-  API->>API: category filter · verify_sources<br/>drop URLs Tavily never returned → gap
-  API-->>UI: ResearchResult · MarketSignal[] · gaps · searches
-  UI->>UI: replaces the saved research for this market + series<br/>(localStorage) → backing, links, score, wishlist, profiles
-  PM->>UI: star (wishlist) · focus · keep / reject requests
+  Lead-->>API: merged · deduped · relatesTo linked to exact request titles · gaps
+  API->>API: category filter · verify_sources (drop URLs Tavily never returned)
+  API->>DB: research_runs
+  API-->>UI: MarketSignal[] · gaps · searches
+  UI->>UI: replaces the saved research for this market + series → backing, links, score, wishlist, profiles
 ```
 
-What makes it trustworthy:
-- **The agents propose and the PM decides.** The result only changes the "Competitors & trends" panel and the *market backing* part of the Dixi score. Wishlist, keep and reject stay human decisions.
-- **Sources are checked by code, not by the model.** Every URL Tavily returns is recorded during the run. A source the model wrote that is not among them gets removed, and a signal left without sources is dropped and listed as a gap.
-- **Honesty is part of the output.** `gaps` lists what the agents searched for and could not back. In the 11 Oct run for the 5 Series in Europe, one gap read: *"Euro NCAP criteria are safety-rating incentives, not binding EU interface law."*
-- **The budget is bounded.** Each scout gets at most 6 searches at basic depth (1 Tavily credit each), so a run uses at most about 12 credits. Past the budget the search tool answers "budget used up, answer now" instead of aborting the run.
+- **Sources are checked by code, not by the model.** A signal left without a verified source is dropped and listed as a gap.
+- **Bounded cost.** At most about 12 Tavily credits per run (basic depth). Past its budget the search tool answers "budget used up, answer now" instead of aborting the run.
+- **One run, one decision trail.** The generation stores the id of the run (and of the assessment) it was built with.
 
-## 2. Which data goes where
+## 3. Which data goes where
 
 ```mermaid
 flowchart LR
-  %% Privacy boundary: BMW data never leaves the machine; only our own titles and public web content reach external services.
   classDef local fill:#fdecea,stroke:#e22718,color:#121722
   classDef ours fill:#eef1f6,stroke:#5b6676,color:#121722
   classDef ext fill:#e8f0fc,stroke:#1c69d4,color:#121722
 
   subgraph LOCAL["This machine only (git-ignored)"]
-    BMW[("data/ · BMW dataset<br/>feedback verbatims · studies · sales · option list")]:::local
-    SCR["scripts/build-pipeline-data.py<br/>deterministic: taxonomy → 25 clusters<br/>no network, no LLM"]:::local
-    PJ[("web/data-local/pipeline.json<br/>counts · scores · sales · options · ≤3 quotes")]:::local
+    BMW[("data/ · BMW dataset<br/>verbatims · studies · sales · options")]:::local
+    L1F[("data/L1_Files<br/>team research on BMW principles")]:::local
+    SCR["scripts/build-pipeline-data.py<br/>taxonomy → clusters, counts<br/>no network, no LLM"]:::local
+    PJ[("web/data-local/pipeline.json")]:::local
   end
-
-  WEB["Web app (Next.js)<br/>urgency · score · decisions · profiles<br/>all computed in code"]:::ours
-  EX[("example.ts<br/>same shape, example data<br/>used on Vercel")]:::ours
-
-  OAI["OpenAI API<br/>research agents · scoring advice"]:::ext
-  TAV["Tavily<br/>web search"]:::ext
-  WWW["Public web<br/>press · regulators · market research"]:::ext
+  WEB["Web app<br/>score · decisions · profiles"]:::ours
+  API["FastAPI backend"]:::ours
+  DB[("Supabase<br/>principles · decisions · generations<br/>agent runs · settings")]:::ext
+  OAI["OpenAI API"]:::ext
+  TAV["Tavily → public web"]:::ext
 
   BMW --> SCR --> PJ --> WEB
-  EX --> WEB
-  WEB -- "series · market · our request titles · focus" --> OAI
-  WEB -- "a manager's instruction + scoring settings" --> OAI
-  OAI -- "search queries written by the scouts" --> TAV --> WWW
-  TAV -- "public snippets + URLs" --> OAI
+  L1F -- "seed_principles.py" --> DB
+  WEB <--> API <--> DB
+  API -- "request titles · categories · mention counts · principles" --> OAI
+  API -- "scout search queries" --> TAV
 ```
 
-**What the BMW data is used for, and what is not sent anywhere:**
-
-| BMW data | How it is used today | Leaves the machine? |
+| Data | Used for | Leaves the machine? |
 |---|---|---|
-| Customer feedback (verbatims, taxonomy, feedback type, market) | `build-pipeline-data.py` maps BMW's taxonomy topics to 25 PM-friendly clusters with hand-written titles, counts unique mentions per market and type, and keeps ≤ 3 short quotes per request for the local screen | **No.** Quotes stay in `pipeline.json`. Only our own cluster *titles* (e.g. "Simpler iDrive menus and touchscreen") go to OpenAI, so the research agent can link signals to them |
-| Customer studies (CN/EU 0–10, US 1–7) | Weakest-score panel; US converted ×10/7 | No |
-| Sales 2024/2025/2030 | Market volume, fallback logic, sales table | No |
-| Option list (Germany, July 2026) | Related options per request, profile option totals | No |
-| Competitors and trends | **Not BMW data.** Public web only: the saved research (`market-signals.ts`, 10 Oct) or a live run (backend) | Search queries go to Tavily, and public results come back |
+| BMW customer feedback | Feature requests: our own titles, categories, mention counts per market, ≤ 3 quotes for the local screen | **Titles, categories and counts only**, to OpenAI (assessor, research linking). Quotes and verbatims: never |
+| BMW studies, sales, option list | Weakest-score panel, market volume, related options | No |
+| L1 principle research (`data/L1_Files`) | Parsed into `principles` rows (statement, evidence, boundary, sources) | Yes: Supabase (private, backend-only), and principle text to OpenAI |
+| Decisions, generations, settings | Audit trail and decision memory | Yes: Supabase |
+| Competitors and trends | Public web only | Search queries to Tavily |
 
-**What "AI analysis" means today, honestly:** the analysis screen narrates the steps of the pipeline. Behind it, clustering, categories and urgency come from the deterministic script and the web code, **not from an LLM**. Only the research agent (this page) and the natural-language scoring settings ([`09`](09-scoring-and-memory.md)) call a model. LLM labelling of verbatims is planned (§4). It would be the first time customer text is sent to OpenAI, so it needs a decision first (§5).
+## 4. Designed architecture vs what is built
 
-## 3. Designed architecture vs what is built
+| Designed step | Built today | Where |
+|---|---|---|
+| L1 principles per series, owned ([01](01-system-overview.md)) | ✅ 53 principles (series · market · Group) in Supabase; owners edit via `PUT /principles/{id}` (version + 1). No edit UI yet | `supabase/migrations`, `backend/app/api/store.py` |
+| Principle check of every request | ✅ principle assessor, verified ids, conflicts, gaps | `backend/app/agents/principles.py` |
+| Research agent with sources ([01](01-system-overview.md), [07](07-pm-workflow.md)) | ✅ lead + 2 scouts, Tavily MCP, source check | `backend/app/agents/research.py` |
+| Cluster feedback into requests ([01](01-system-overview.md)) | 🟡 **deterministic** taxonomy mapping (no LLM). An LLM labeller would send customer text to OpenAI and needs BMW's consent | `scripts/build-pipeline-data.py` |
+| Urgency, categories | ✅ rules (mention thresholds; category per cluster) | `profiles.ts`, script |
+| Dixi score + decision memory ([09](09-scoring-and-memory.md)) | ✅ web + Python port, memory rebuilt from Supabase generations | `scoring.ts`, `backend/app/scoring.py` |
+| PM gate: keep · reject + reason · priority · wishlist | ✅ decisions append-only in Supabase. Priority order saved, single moves not logged | `decision-log.ts`, `POST /decisions` |
+| Generations + edit and rebuild | ✅ Supabase + local copy | `sessions.ts`, `/generations` |
+| Settings by sliders or plain words, change log | ✅ Supabase `scoring_changes` | `scoring-store.ts`, `/settings` |
+| 3 profiles, L1 = principle fit + PM priority | ✅ | `profiles.ts` |
+| L3 social test | 🟡 simulated (labelled) | `analytics.ts` |
+| Requirement writer, gates G1–G4, Codebeamer, postpone, pgvector matching | ⚪ not built | [05](05-hitl-map.md) |
 
-| Designed step (doc) | Mode in the design | Built today | Where |
-|---|---|---|---|
-| Research agent: competitor features + trends, with sources ([01](01-system-overview.md), [07](07-pm-workflow.md)) | AI proposes | ✅ **Live**: lead + 2 scout sub-agents, Tavily MCP, source check, gaps. Saved research as fallback | `backend/app/agents/research.py`, `web/src/lib/pipeline/research.ts` |
-| Link requests ↔ competitors / trends ([07](07-pm-workflow.md)) | AI on its own | ✅ Live runs: the lead fills `relatesTo` with exact request titles. Saved research: links written by hand | backend lead agent |
-| Collect sources ([05](05-hitl-map.md)) | AI on its own | ✅ for public web (Tavily). BMW data: local loader script | backend · `scripts/` |
-| Cluster feedback into feature requests ([01](01-system-overview.md)) | AI on its own | 🟡 **Deterministic** taxonomy mapping, no LLM. Planned: LLM labeller + clusterer | `scripts/build-pipeline-data.py` |
-| Categorise Exterior · Interior · Digital · Powertrain | AI on its own | 🟡 Requests: fixed per cluster in the script. Signals: chosen by the agents, filterable via `categories` | script · backend |
-| Urgency (how many customers ask) | AI on its own | ✅ Code, not AI (mention thresholds) | `web/src/lib/pipeline/profiles.ts` |
-| Dixi score + decision memory ([09](09-scoring-and-memory.md)) | AI proposes, rules set by team | ✅ in the web app (localStorage). Backend `get_decision_memory` + pgvector: planned | `web/src/lib/pipeline/scoring.ts` |
-| PM gate: keep · reject + reason · priority · wishlist | Human only | ✅ web (localStorage) | `Pipeline.tsx` |
-| Build 3 profiles | AI proposes | ✅ deterministic builder in the web app | `profiles.ts` |
-| Requirement writer (SMART drafts) ([05](05-hitl-map.md)) | AI proposes ~90 % | ⚪ Not built | planned `backend/app/agents/` |
-| Gates G1–G4, engineering check, Codebeamer hand-off ([05](05-hitl-map.md)) | Human / AI proposes | ⚪ Not built | target state |
-| L3 social test | AI on its own | 🟡 Simulated in the web app | `analytics.ts` |
-| Store: evidence, decisions, generations, research runs | — | 🟡 localStorage. Supabase project **Dixi** exists, no schema yet | planned `supabase/` |
+## 5. Verified end to end (11 Oct 2026, Europe · 5 Series, hosted Supabase)
 
-**Where it differs from the design:**
-1. The design places the research agent *before* the analysis as an input to L2. In the app it is a **PM-triggered** step on the review screen, because a run takes about a minute and spends credits. The saved research fills the gap until it is run.
-2. The design says the AI clusters feedback. Today a script does it deterministically. That is more explainable but less flexible (§4).
-3. Research runs are not stored server-side yet, so the run that backed a decision lives only in that browser. For full auditability ([08](08-decision-audit.md)) a run should be saved with its inputs and linked from the generation.
+These steps ran in the browser against the live backend:
+1. **Analysis:** loaded 30 principles. The assessor rated 20 requests in about 50 s. Sample output: "Range has strong demand (13 mentions). If delivered through substantially heavier batteries… it could strain G60-P1 and EU-08." Its honest gap: "The decision-memory tool returned no records."
+2. **Decisions:** the PM kept 3 requests and rejected *More storage and luggage space* with a reason, then built the profiles. Supabase now held the generation, 4 decisions and the assessment id.
+3. **Next analysis in a cleared browser:** everything came back from Supabase.
+   - The 3 kept requests carried "Kept before" and the bonus (range 78 → 92).
+   - The rejected one read "Rejected 11 Oct 2026 · Boot space is fixed by the platform… · Marco Rossi", and its score fell from 31 to 10 through decision memory.
 
-## 4. Frontend parts that use the research agent
+Offline tests: `cd backend && uv run pytest -q` (22 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
 
-| Part | What changed |
-|---|---|
-| `lib/pipeline/research.ts` (new) | `runResearch()` calls `NEXT_PUBLIC_API_URL/research/signals`; `useResearch(market, series)` keeps the last run per market + series in localStorage and gives signals stable ids (`R-<title>`), so a wishlist star survives a re-run |
-| `components/pipeline/SignalsPanel.tsx` | Shows provenance ("Saved research" or "Live research · time · N web searches"), **Run research agent** / **Run again** / **Use saved research**, errors, and **What we couldn't find** (the agents' gaps) |
-| `components/pipeline/Pipeline.tsx` | Signals come from the live run when there is one, else from `market-signals.ts`. Everything downstream uses the same list: backing in the score, matching badges, *Backed by market* filter, wishlist, profiles (wishes + backing), header count |
-| `components/pipeline/SignalCount.tsx` (new) → `SeriesPicker.tsx` | Signal count on each series card follows the last live run ("· live") |
-| Not touched | Landing, globe, generations, settings: they do not use market signals. Saved generations keep the signals they were built with |
-
-Live research runs for **Europe, USA and China** one market at a time (the backend's markets). For *All markets* and *Japan* the button explains why it is disabled. Without `NEXT_PUBLIC_API_URL` (the public Vercel deployment today), the app uses the saved research.
-
-## 5. Next steps (recommended order)
+## 6. Next steps
 1. **Deploy** the backend to FastAPI Cloud and set `NEXT_PUBLIC_API_URL` on Vercel ([backend README](../../backend/README.md#deploy-fastapi-cloud-public-beta)).
-2. **Store research runs** in Supabase (`research_run`: inputs, model, searches, signals, gaps, sources) and link a generation to the run it used. That closes the audit gap in §3.3.
-3. **Decision memory in the backend**: `get_decision_memory(series, market)` as a tool for the next agent, same rules as `scoring.ts`, with pgvector matching ([09](09-scoring-and-memory.md)).
-4. **Requirement writer** agent: SMART drafts per kept request, citing the request's evidence and the signals behind it (G1 → draft in [05](05-hitl-map.md)).
-5. **LLM labelling of BMW feedback**: only once the team confirms that BMW customer text may be sent to OpenAI. OpenAI states it does not train on API data by default (https://openai.com/enterprise-privacy/), but sending the text is still a data-sharing decision for BMW. Until then, keep the deterministic script.
+2. **Principle edit UI** for owners (the API exists).
+3. **Requirement writer** with `get_decision_memory` and the assessor's principle ids (SMART drafts, G1 → draft in [05](05-hitl-map.md)).
+4. **pgvector** matching, so a reworded request still finds its past decision.
+5. **LLM labelling of verbatims**, only after BMW confirms the data may go to OpenAI.

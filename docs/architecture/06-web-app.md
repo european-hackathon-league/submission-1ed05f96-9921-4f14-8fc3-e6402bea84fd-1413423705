@@ -44,7 +44,7 @@ flowchart TB
     PL["Pipeline (client)<br/>analysis → decisions → build → dashboard"]:::comp
     RC["RequestCard · RequestDetails · RejectDialog<br/>drag priority · keep / reject + reason"]:::comp
     SG["SignalsPanel<br/>competitors &amp; trends · wishlist<br/>Run research agent · gaps"]:::comp
-    GV["GenerationView · Generations list<br/>sessions.ts (localStorage)"]:::comp
+    GV["GenerationView · Generations list<br/>sessions.ts (Supabase via API + local copy)"]:::comp
     PR["Profiles · ProfileDetail (catalogue)<br/>PDF via print"]:::comp
     AN["Analytics<br/>simulated social test · chart"]:::comp
   end
@@ -60,7 +60,7 @@ flowchart TB
   end
 
   API["backend/ · FastAPI<br/>POST /research/signals<br/>lead + scout sub-agents · Tavily MCP"]:::comp
-  DB["Supabase (planned)<br/>runs · decisions · generations"]:::future
+  DB[("Supabase<br/>principles · decisions · generations<br/>agent runs · settings")]:::data
 
   R1 --> NAV & HERO & PROC & PROD & FOOT
   HERO --> MG
@@ -76,7 +76,8 @@ flowchart TB
   PL --> PD & MS & RS & PF
   SG -- "Run research agent" --> RS
   RS -- "NEXT_PUBLIC_API_URL" --> API
-  API -. "later" .-> DB
+  API --> DB
+  PL -- "principles · assessment · decisions · generations" --> API
   MG --> GC --> W
   GC --> MK
   MP --> MK
