@@ -45,7 +45,7 @@ flowchart TB
     RC["RequestCard · RequestDetails · RejectDialog<br/>drag priority · keep / reject + reason"]:::comp
     SG["SignalsPanel<br/>competitors &amp; trends · wishlist<br/>Run research agent · gaps"]:::comp
     GV["GenerationView · Generations list<br/>sessions.ts (Supabase via API + local copy)"]:::comp
-    PR["Profiles · ProfileDetail (catalogue)<br/>PDF via print"]:::comp
+    PR["Profiles · ProfileDetail (catalogue)<br/>PDF via print · GenerationChat"]:::comp
     AN["Analytics<br/>simulated social test · chart"]:::comp
   end
 

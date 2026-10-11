@@ -69,6 +69,10 @@ sequenceDiagram
   Web->>API: POST /decisions (append-only, undo is its own row)
   PM->>Web: Build profiles
   Web->>API: PUT /generations/{id} (profiles, decisions, priority, run ids)
+  PM->>Web: ask on a profile page ("why was X rejected?")
+  Web->>API: POST /chat/generation
+  API->>AI: generation_analyst + tools (generation · principles · assessment · research · memory)
+  AI-->>Web: answer + "looked up" sources
   Note over Web,DB: The next analysis of this series + market reads this generation:<br/>rejected requests rank lower ("Rejected · reason · who"), kept ones get a bonus,<br/>a reject comes back as "Resurfaced" when demand grew ≥ 30 %.
 ```
 
@@ -92,6 +96,7 @@ After the PM picks a market and a car, **the principle assessor runs live**. The
 | Decisions with who · when · reason; reject needs a reason (UI, API and database) | ✅ append-only history | [`decision-log.ts`](web/src/lib/pipeline/decision-log.ts), `POST /decisions` |
 | Generations saved and read back as memory by the next generation | ✅ | [`sessions.ts`](web/src/lib/pipeline/sessions.ts), `PUT /generations`, `GET /memory` |
 | 3 car profiles, L1 = principle fit + PM priority, tensions listed, PDF via print | ✅ | [`profiles.ts`](web/src/lib/pipeline/profiles.ts), [`Profiles.tsx`](web/src/components/pipeline/Profiles.tsx) |
+| Ask questions about a generation on the profile page; answers only from retrieved facts, with what was looked up | ✅ generation chat | [`backend/app/agents/chat.py`](backend/app/agents/chat.py), [`GenerationChat.tsx`](web/src/components/pipeline/GenerationChat.tsx), `POST /chat/generation` |
 | L3 social test | 🟡 simulated, labelled in the UI | [`analytics.ts`](web/src/lib/pipeline/analytics.ts) |
 | Monthly refresh of BMW feedback + trends/competitors (cron) | ⚪ planned; today the data script runs by hand and research runs on request | [doc 10 §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first) |
 | Gates G1–G4, engineering/BOM check, Codebeamer export, postpone, side-by-side generation compare | ⚪ target design only | [`docs/architecture/05-hitl-map.md`](docs/architecture/05-hitl-map.md) |

@@ -1,8 +1,9 @@
 # Dixi backend
 
-FastAPI API with two AI agents and the store behind the dashboard:
+FastAPI API with three AI agents and the store behind the dashboard:
 - **Principle assessor (L1):** rates each feature request against BMW principles stored in Supabase. It returns a fit per request with cited principle ids, evidence and assumptions kept separate, conflicts and gaps. Its fit is the *principle fit* in the Dixi score.
 - **Research agent (L2):** competitor features customers like and market trends, every one with traced sources.
+- **Generation chat:** answers a PM's questions about one generation from facts it retrieves with tools, and lists what it looked up.
 - **Store (Supabase):** principles, decisions (append-only), generations, agent runs, scoring settings with a change log, and the decision memory that the next generation reads.
 
 The web app (`web/`) uses all of it when `NEXT_PUBLIC_API_URL` is set. Without it, the web app falls back to the browser and the saved research.
@@ -18,6 +19,7 @@ Python 3.13 · **FastAPI** · **Pydantic AI** v2 (typed outputs) + **Pydantic AI
 | `PUT /principles/{id}` | Owner edits a principle; version + 1, who and when recorded |
 | `POST /assess/principles` · `GET /assess/principles/latest` | Principle assessor (stored in `principle_assessments`) |
 | `POST /research/signals` · `GET /research/signals/latest` | Research agent (stored in `research_runs`) |
+| `POST /chat/generation` | Generation chat: answers a question about one stored generation from retrieved facts; returns `sources` (what was looked up) |
 | `POST /decisions` · `GET /decisions?series&market` | Append-only decision history; a reject needs a reason (API and database) |
 | `PUT /generations/{id}` · `GET /generations` · `DELETE /generations/{id}` | Saved builds (the web app's Session object) |
 | `GET /memory?series&market` | Decision memory as the next generation sees it (`app/scoring.py`, same rules as `web/src/lib/pipeline/scoring.ts`) |
@@ -35,6 +37,15 @@ Python 3.13 · **FastAPI** · **Pydantic AI** v2 (typed outputs) + **Pydantic AI
   - mention past rejects without lowering the fit (the score applies memory once).
 - **`verify`** drops principle ids the agent was not given, de-duplicates, and lists requests it did not assess as gaps. The score then keeps the series-focus fallback for those requests.
 - **Seed:** `uv run python -I scripts/seed_principles.py` parses the team's L1 research in `../data/L1_Files` (local, git-ignored) and the series fundamentals in `web/src/lib/pipeline/series.ts`, then upserts 53 rows. `--dry-run` prints them.
+
+## Generation chat
+`generation_analyst` (fast model) answers a PM's question about one generation. Its tools:
+- `get_generation`: profiles, requirements in priority, decisions with reasons, wishlist, backing signals, social test.
+- `get_principles(ids)`
+- `get_assessment` and `get_research`: the runs this build used (ids saved with the generation), else the latest for its series and market.
+- `get_decision_memory`
+
+Its instructions say to use only tool facts, cite ids, keep assumptions apart, and say what isn't recorded. Each tool call adds to `sources`, which the API returns and the UI shows as "Looked up: …". There's no customer text: stored generations carry no quotes. Test: `tests/test_chat.py`.
 
 ## Research agent: lead researcher + two scout sub-agents
 
@@ -68,6 +79,7 @@ backend/
 │   ├── api/                 research.py · assess.py · store.py (principles, decisions, generations, settings, memory)
 │   ├── agents/research.py   lead researcher + scouts, source verification
 │   ├── agents/principles.py principle assessor + get_decision_memory tool, id verification
+│   ├── agents/chat.py       generation chat (generation_analyst) with fact-retrieval tools
 │   ├── agents/tavily.py     Tavily MCP toolset (filtered, URL recording, soft budget)
 │   └── models/              signals.py · assess.py · core.py (data contracts)
 ├── scripts/seed_principles.py  L1 principles → Supabase
@@ -79,7 +91,7 @@ backend/
 ```bash
 cd backend
 uv sync
-uv run pytest -q                 # offline tests (22)
+uv run pytest -q                 # offline tests (24)
 uv run fastapi dev               # http://127.0.0.1:8000/docs
 curl -X POST localhost:8000/research/signals -H 'content-type: application/json' \
   -d '{"series":"G60","market":"EU","maxSignals":6,"featureRequests":["Simpler iDrive menus and touchscreen"]}'

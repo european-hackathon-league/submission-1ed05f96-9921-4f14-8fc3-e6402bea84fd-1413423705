@@ -1,9 +1,10 @@
 # Backend agents and storage, as built
 
-Status 11 Oct 2026, branch `backend-agents-tavily`. This page shows what the backend does today: two agents, the Supabase store and the decision memory that links generations. It also shows which data goes where and how this lines up with the design ([`01`](01-system-overview.md), [`05`](05-hitl-map.md), [`07`](07-pm-workflow.md), [`09`](09-scoring-and-memory.md)). Code: `backend/` (see its README), `supabase/migrations/`, and on the web side `web/src/lib/api.ts` and `web/src/lib/pipeline/{principles,research,decision-log,sessions}.ts`.
+Status 11 Oct 2026, branch `backend-agents-tavily`. This page shows what the backend does today: three agents, the Supabase store and the decision memory that links generations. It also shows which data goes where and how this lines up with the design ([`01`](01-system-overview.md), [`05`](05-hitl-map.md), [`07`](07-pm-workflow.md), [`09`](09-scoring-and-memory.md)). Code: `backend/` (see its README), `supabase/migrations/`, and on the web side `web/src/lib/api.ts` and `web/src/lib/pipeline/{principles,research,decision-log,sessions}.ts`.
 
 **In one paragraph:**
 - **Feature requests:** BMW's data becomes feature requests locally, through a deterministic script.
+- **Generation chat:** on a profile page the PM can ask about that build, and an agent answers from facts it looks up (§2b).
 - **Principle assessor (L1):** during the analysis it rates every request against BMW principles stored in Supabase (series fundamentals, market principles, Group principles). It cites principle ids, keeps evidence and assumptions apart, and lists conflicts and gaps. Its fit is the score's *principle fit*.
 - **Research agent (L2):** the PM can start it. Two scouts search the web through Tavily; every source is checked against the real search results.
 - **The PM:** keeps, rejects (with a reason), orders and wishlists.
@@ -19,6 +20,7 @@ When a PM picks a market and a car, **only one AI step runs live: the principle 
 | **Competitors and trends** | **On demand**: when the PM clicks **Run research agent** (about 1 min, ≤ 12 Tavily credits). Each run is stored in Supabase (`research_runs`) | The last stored live run for this market + car; if there is none, the saved research from 10 Oct 2026 (`market-signals.ts`). The panel says which one ("Live research · date · N web searches" or "Saved research") | **Yes**, when run: lead researcher + 2 scouts on Tavily |
 | **BMW principles (L1)** | **Live, during the analysis step**, unless the same requests with the same backing were already assessed (then the stored run is reused) | Principle fit per request, conflicts, gaps (principles panel, request details) | **Yes**: principle assessor |
 | **Decision memory** | **Live**: rebuilt from the stored generations when the list opens | "Rejected · reason · who", "Kept before", "Resurfaced" badges and the adjusted score | No: the scoring formula |
+| **Generation chat** | **Live, per question** on a profile page | An answer from the generation's stored facts + "Looked up: …" | **Yes**: generation_analyst |
 | **Social test (L3)** | When the PM clicks **Launch test (simulated)** on a generation | Simulated 14-day curves | No: seeded simulation |
 
 The analysis screen states this per step, e.g. "grouped by BMW's feedback taxonomy (data script)" and "Competitors & trends: saved research … Run the research agent for a live search".
@@ -103,6 +105,37 @@ sequenceDiagram
 - **Bounded cost.** At most about 12 Tavily credits per run (basic depth). Past its budget the search tool answers "budget used up, answer now" instead of aborting the run.
 - **One run, one decision trail.** The generation stores the id of the run (and of the assessment) it was built with.
 
+## 2b. Generation chat: ask about one build
+
+On every profile page the PM can ask questions about that generation ("Why was luggage space rejected?", "Which principles does this profile strain?"). A small agent, `generation_analyst` (fast model), answers **only from facts it looks up with tools**; it has no general knowledge to fall back on by instruction, and says when something is not recorded.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor PM as Product manager
+  participant UI as Web · GenerationChat<br/>(profile page)
+  participant API as POST /chat/generation
+  participant GA as generation_analyst<br/>(fast OpenAI model)
+  participant DB as Supabase
+
+  PM->>UI: question (+ last turns, current profile)
+  UI->>API: generationId · question · history
+  API->>DB: load the generation (404 if not stored)
+  API->>GA: question
+  GA->>API: get_generation · get_principles(ids) · get_assessment · get_research · get_decision_memory
+  API->>DB: generation · principles · the assessment / research run this build used · memory
+  API-->>GA: facts (no customer text: stored generations carry no quotes)
+  GA-->>API: answer + cited ids
+  API-->>UI: answer + sources (what was retrieved, recorded by code)
+  UI-->>PM: answer + "Looked up: generation G-… · principle assessment … · principles EU-03, G60-P1"
+```
+
+- **Retrieval, not a vector index.** The facts of one generation are small and structured, so the tools read them directly: the build's own assessment and research run (by the ids saved with the generation), else the latest for its series and market.
+- **Verified 11 Oct 2026** on generation G-MV3HB88P:
+  - *"Which requests were rejected, by whom and why?"* got the reject, the PM and the reason, looked up in the generation and the decision memory.
+  - *"Which principles support or strain the range requirement, and what is assumed?"* named G60-P1, G60-P2, EU-03 and GL-03, listed the assessor's assumptions separately, and looked up the linked assessment.
+- **Not built:** streaming answers and saving chat history (the conversation lives in the page).
+
 ## 3. Which data goes where
 
 ```mermaid
@@ -153,6 +186,7 @@ flowchart LR
 | Settings by sliders or plain words, change log | ✅ Supabase `scoring_changes` | `scoring-store.ts`, `/settings` |
 | 3 profiles, L1 = principle fit + PM priority | ✅ | `profiles.ts` |
 | L3 social test | 🟡 simulated (labelled) | `analytics.ts` |
+| Ask questions about a generation | ✅ generation chat, answers from retrieved facts with sources | `backend/app/agents/chat.py`, `web/src/components/pipeline/GenerationChat.tsx` |
 | Requirement writer, gates G1–G4, Codebeamer, postpone, pgvector matching | ⚪ not built | [05](05-hitl-map.md) |
 
 ## 5. Verified end to end (11 Oct 2026, Europe · 5 Series, hosted Supabase)
@@ -164,7 +198,7 @@ These steps ran in the browser against the live backend:
    - The 3 kept requests carried "Kept before" and the keep bonus (+5 points at default settings).
    - The rejected one read "Rejected 11 Oct 2026 · Boot space is fixed by the platform… · Marco Rossi". With the default 60 % penalty at full strength, its score fell to 10 and it moved to last place.
 
-Offline tests: `cd backend && uv run pytest -q` (22 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
+Offline tests: `cd backend && uv run pytest -q` (24 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
 
 ## 6. Next steps
 0. **Monthly refresh job** (cron) for BMW feedback and for trends and competitors, plus re-assessment: see §0.

@@ -42,6 +42,7 @@ flowchart TB
   BU["⑤ Build 3 car profiles<br/>Fix the basics · Tech-forward · Comfort &amp; craft<br/>follow the PM's priority<br/>score = L1 (principles + priority) + L2 coverage"]
   GEN[("⑥ Generations<br/>profiles · decisions · priority<br/>saved per build")]
   PDF[["Profile page + PDF<br/>catalogue style · decision trail"]]
+  CHAT["Generation chat (AI)<br/>PM asks about this build<br/>answers from retrieved facts + sources"]
   L3["⑦ L3 · Social test<br/>which profile tracks better (simulated)<br/>weight: 7 Series 2% · 5 Series 8% · 1 Series 20%"]
 
   S1 --> L2
@@ -58,6 +59,8 @@ flowchart TB
   DM -. "rejected requests stay out" .-> BU
   BU --> GEN --> PDF
   DM --> PDF
+  PDF --> CHAT
+  GEN -. "facts: profiles · decisions · principles · runs" .-> CHAT
   GEN -- "after profiles exist" --> L3
   L3 -- "updates scores" --> GEN
   GEN -. "edit and rebuild: decisions + priority loaded" .-> GATE
@@ -74,7 +77,7 @@ flowchart TB
   class S1,S2 src
   class S4,KP,RJ,PR,WL human
   class CL,UR,LK auto
-  class RA,BU,PA propose
+  class RA,BU,PA,CHAT propose
   class L1 l1
   class L2 l2
   class L3 l3
