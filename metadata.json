@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M4MYDAQVEWQ556P2WWN9006C",
+  "strategy": "manual-commit",
+  "branch": "backend-agents-tavily",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/components/pipeline/GenerationChat.tsx",
+    "web/src/components/pipeline/Profiles.tsx",
+    "web/src/lib/pipeline/sessions.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 2173,
+    "cache_read_tokens": 541107,
+    "output_tokens": 1100,
+    "api_call_count": 1
+  }
+}
