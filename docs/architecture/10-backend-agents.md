@@ -163,6 +163,30 @@ sequenceDiagram
   - *"Which principles support or strain the range requirement, and what is assumed?"* named G60-P1, G60-P2, EU-03 and GL-03, listed the assessor's assumptions separately, and looked up the linked assessment.
 - **Not built:** streaming answers and saving chat history (the conversation lives in the page).
 
+## 2c. Evidence page: where each requirement comes from
+
+`/dashboard/evidence?generation=<id>&profile=<id>&source=<SOURCE>`, opened with **Evidence** on a profile page. It shows one card per requirement, numbered in the PM's priority:
+- **Observed:** a one-paragraph summary with record ids, the study cell, backing signals and the principle fit.
+- **Evidence lines:** each with an exact reference.
+- **Source chips:** click one to filter the page; the filter is kept in the URL.
+- **What we don't know:** the gaps for that requirement.
+
+Built by `web/src/lib/pipeline/evidence.ts` (`buildEvidence`).
+
+| Chip | What it shows | Reference |
+|---|---|---|
+| `BMW-FEEDBACK-<series>` | Unique records per market, wishes / hard to use / defects, channels, BMW taxonomy topics | Sample **BMW record ids** (e.g. `G60-0034`), ids only |
+| `BMW-STUDIES` | Customer-study scores for the attributes linked to the request (explicit `STUDY_LINKS` mapping, reviewed by hand) | The **workbook cell**, e.g. `CN_EU_2025!E42` or `US_2025!C905:C911` |
+| `BMW-SALES` | Units 2024 / 2025 / 2030 forecast in that market | sales sheet |
+| `BMW-OPTIONS` | Related options already on today's price list | option code and price |
+| `RESEARCH` | Competitor features and trends that back the request | source URLs |
+| `L1-PRINCIPLES` | The principle assessor's fit, supported and strained principle ids, evidence vs **assumptions** (highlighted) | principle ids, from the assessment **this build used** (`GET /assess/principles/run/{id}`) |
+| `PM-DECISIONS` | Kept / rejected / wishlisted, by whom, when, why, mentions at the time | decision timestamp |
+
+- **Customer quotes:** shown only from the local data, folded away and marked "local data only, never uploaded".
+- **Where the references come from:** the data script (`scripts/build-pipeline-data.py`) records the cell of every study value and up to 12 record ids per request.
+- **Older generations:** builds made before ids were exported get them by request id, which is unchanged.
+
 ## 3. Which data goes where
 
 ```mermaid
@@ -213,6 +237,7 @@ flowchart LR
 | Settings by sliders or plain words, change log | ✅ Supabase `scoring_changes` | `scoring-store.ts`, `/settings` |
 | 3 profiles, L1 = principle fit + PM priority | ✅ | `profiles.ts` |
 | L3 social test | 🟡 simulated (labelled) | `analytics.ts` |
+| Evidence per requirement with exact references (record ids, study cells, option codes, source URLs, principle ids) | ✅ evidence page | `web/src/lib/pipeline/evidence.ts`, `web/src/components/pipeline/EvidencePage.tsx` |
 | Ask questions about a generation | ✅ generation chat, answers from retrieved facts with sources | `backend/app/agents/chat.py`, `web/src/components/pipeline/GenerationChat.tsx` |
 | Requirement writer, gates G1–G4, Codebeamer, postpone, pgvector matching | ⚪ not built | [05](05-hitl-map.md) |
 

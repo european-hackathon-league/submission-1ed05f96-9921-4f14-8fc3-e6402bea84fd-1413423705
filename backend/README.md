@@ -17,8 +17,8 @@ Python 3.13 · **FastAPI** · **Pydantic AI** v2 (typed outputs) + **Pydantic AI
 | `GET /health` | Store (`supabase` or `memory`), which agents are up, which keys are set (never their values) |
 | `GET /principles?market=EU&series=G60` | L1 principles for this scope: series fundamentals + market (Europe includes the UK) + Group |
 | `PUT /principles/{id}` | Owner edits a principle; version + 1, who and when recorded |
-| `POST /assess/principles` · `GET /assess/principles/latest` | Principle assessor (stored in `principle_assessments`) |
-| `POST /research/signals` · `GET /research/signals/latest` | Research agent (stored in `research_runs`) |
+| `POST /assess/principles` · `GET /assess/principles/latest` · `GET /assess/principles/run/{id}` | Principle assessor (stored in `principle_assessments`) |
+| `POST /research/signals` · `GET /research/signals/latest` · `GET /research/signals/run/{id}` | Research agent (stored in `research_runs`) |
 | `POST /chat/generation` | Generation chat: answers a question about one stored generation from retrieved facts; returns `sources` (what was looked up) |
 | `POST /decisions` · `GET /decisions?series&market` | Append-only decision history; a reject needs a reason (API and database) |
 | `PUT /generations/{id}` · `GET /generations` · `DELETE /generations/{id}` | Saved builds (the web app's Session object) |

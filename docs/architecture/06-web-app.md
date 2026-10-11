@@ -14,6 +14,7 @@ flowchart TB
     R1["/ · landing"]:::route
     R2["/dashboard · Generations (home)<br/>/dashboard/new · New analysis (globe)"]:::route
     R5["/dashboard/generations#id · one generation<br/>profiles · analytics · decisions"]:::route
+    R7["/dashboard/evidence?generation&profile&source<br/>evidence per requirement · source chips"]:::route
     R6["/dashboard/settings · scoring + decision memory<br/>POST /api/scoring-advice (AI → typed settings)"]:::route
     R3["/dashboard/[market] · choose a series"]:::route
     R4["/dashboard/[market]/[series] · requirement pipeline<br/>1-series · 5-series · 7-series"]:::route
@@ -70,6 +71,7 @@ flowchart TB
   PL --> RC & SG
   PL -- "build → save generation" --> R5
   R5 --> TB & GV
+  PR -- "Evidence" --> R7
   GV --> PR & AN & SB
   R2 --> GV
   SP --> CI & PD

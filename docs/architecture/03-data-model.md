@@ -46,7 +46,7 @@ erDiagram
   MARKET { text id "EU | US | CN | JP | ALL" text name }
   PRINCIPLE { text id "GL-03 | EU-03 | G60-P1" text level "group | market | series" text market text series text statement text evidence text boundary text confidence jsonb sources text owner int version }
   ASSESSMENT { uuid id text series text market text_array principle_ids jsonb fits "fit · supports · tensions · evidence · assumptions" jsonb conflicts jsonb gaps }
-  FEATURE_REQUEST { text id text series_id text title text category "Exterior | Interior | Digital | Powertrain" text summary int mentions jsonb by_market "mentions per market" jsonb types "wants | difficult | defect" jsonb sources text_array taxonomy "BMW topics behind it" text_array quotes "local data only" }
+  FEATURE_REQUEST { text id text series_id text_array record_ids "sample BMW record ids, local" text title text category "Exterior | Interior | Digital | Powertrain" text summary int mentions jsonb by_market "mentions per market" jsonb types "wants | difficult | defect" jsonb sources text_array taxonomy "BMW topics behind it" text_array quotes "local data only" }
   OPTION_ITEM { text code text name float price_eur text group }
   MARKET_SIGNAL { text id text kind "competitor | trend" text title text competitor text category text detail text_array relates_to "request titles" text strength "strong | emerging" jsonb sources "label + url" }
   DECISION { bigint id text series text market text request_id text title text action "keep | reject | wish | undo" text reason "required for reject" text by "name, local identity" text role timestamptz at int mentions_at "customers asking at decision time" }
