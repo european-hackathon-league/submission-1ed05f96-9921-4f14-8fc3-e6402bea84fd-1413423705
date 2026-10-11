@@ -114,7 +114,7 @@ done
 uv run fastapi cloud env set TAVILY_KEYLESS false --no-redeploy
 uv run fastapi cloud env set CORS_ORIGINS "https://dixi-wheat.vercel.app,http://localhost:3000"   # redeploys
 ```
-Check after deploy: `GET /health` must say `"store": "supabase"`, otherwise data stays in memory. FastAPI Cloud reads `pyproject.toml` + `uv.lock`, `.python-version` (3.13) and the `[tool.fastapi]` entrypoint. Uploads respect `backend/.gitignore`, so `.env` and `.venv` stay local. Hobby tier: free, scale-to-zero (the first request after idle is slow). Docs: https://fastapicloud.com/docs/
+**Deploy from `backend/`, not the repo root.** The app, `pyproject.toml` and `uv.lock` live there. From the root, FastAPI Cloud fails with *"Could not find a default file to run"*. With the GitHub integration, set the app's application directory to `backend`. Check after deploy: `GET /health` must say `"store": "supabase"`, otherwise data stays in memory. FastAPI Cloud reads `pyproject.toml` + `uv.lock`, `.python-version` (3.13) and the `[tool.fastapi]` entrypoint. Uploads respect `backend/.gitignore`, so `.env` and `.venv` stay local. Hobby tier: free, scale-to-zero (the first request after idle is slow). Docs: https://fastapicloud.com/docs/
 
 ## When the agents run
 - **Principle assessor:** live, in the analysis step of the web app, every time a market and car are opened. A stored run is reused when the requests and their backing haven't changed.
