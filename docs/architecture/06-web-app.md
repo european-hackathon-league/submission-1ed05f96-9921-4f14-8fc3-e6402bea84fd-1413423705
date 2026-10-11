@@ -1,6 +1,6 @@
 # Web app
 
-The current Next.js app: routes, components (incl. the requirement pipeline), shared globe, data modules, planned backend.
+The current Next.js app: routes, components (incl. the requirement pipeline), shared globe, data modules and the backend it calls (research agents, see [`10-backend-agents.md`](10-backend-agents.md)).
 
 ```mermaid
 flowchart TB
@@ -14,6 +14,7 @@ flowchart TB
     R1["/ · landing"]:::route
     R2["/dashboard · Generations (home)<br/>/dashboard/new · New analysis (globe)"]:::route
     R5["/dashboard/generations#id · one generation<br/>profiles · analytics · decisions"]:::route
+    R7["/dashboard/evidence?generation&profile&source<br/>evidence per requirement · source chips"]:::route
     R6["/dashboard/settings · scoring + decision memory<br/>POST /api/scoring-advice (AI → typed settings)"]:::route
     R3["/dashboard/[market] · choose a series"]:::route
     R4["/dashboard/[market]/[series] · requirement pipeline<br/>1-series · 5-series · 7-series"]:::route
@@ -43,9 +44,9 @@ flowchart TB
     SP["SeriesPicker<br/>photo cards"]:::comp
     PL["Pipeline (client)<br/>analysis → decisions → build → dashboard"]:::comp
     RC["RequestCard · RequestDetails · RejectDialog<br/>drag priority · keep / reject + reason"]:::comp
-    SG["SignalsPanel<br/>competitors &amp; trends · wishlist"]:::comp
-    GV["GenerationView · Generations list<br/>sessions.ts (localStorage)"]:::comp
-    PR["Profiles · ProfileDetail (catalogue)<br/>PDF via print"]:::comp
+    SG["SignalsPanel<br/>competitors &amp; trends · wishlist<br/>Run research agent · gaps"]:::comp
+    GV["GenerationView · Generations list<br/>sessions.ts (Supabase via API + local copy)"]:::comp
+    PR["Profiles · ProfileDetail (catalogue)<br/>PDF via print · GenerationChat"]:::comp
     AN["Analytics<br/>simulated social test · chart"]:::comp
   end
 
@@ -53,12 +54,14 @@ flowchart TB
     MK["markets.ts<br/>markets · countries · comments"]:::data
     DD["dashboard-data.ts<br/>market URL params"]:::data
     PD["pipeline/load.ts<br/>data-local/pipeline.json (BMW, git-ignored)<br/>or example.ts"]:::data
-    MS["pipeline/market-signals.ts<br/>research agent output, sourced"]:::data
+    MS["pipeline/market-signals.ts<br/>saved research (10 Oct), sourced"]:::data
+    RS["pipeline/research.ts<br/>live run per market + series<br/>localStorage"]:::data
     PF["pipeline/profiles.ts · analytics.ts<br/>urgency · priority · profiles · scores"]:::data
     CI["car-images.ts<br/>CC BY-SA photos"]:::data
   end
 
-  API["backend/ (planned)<br/>FastAPI + Pydantic AI · Supabase"]:::future
+  API["backend/ · FastAPI<br/>POST /research/signals<br/>lead + scout sub-agents · Tavily MCP"]:::comp
+  DB[("Supabase<br/>principles · decisions · generations<br/>agent runs · settings")]:::data
 
   R1 --> NAV & HERO & PROC & PROD & FOOT
   HERO --> MG
@@ -68,10 +71,15 @@ flowchart TB
   PL --> RC & SG
   PL -- "build → save generation" --> R5
   R5 --> TB & GV
+  PR -- "Evidence" --> R7
   GV --> PR & AN & SB
   R2 --> GV
   SP --> CI & PD
-  PL --> PD & MS & PF
+  PL --> PD & MS & RS & PF
+  SG -- "Run research agent" --> RS
+  RS -- "NEXT_PUBLIC_API_URL" --> API
+  API --> DB
+  PL -- "principles · assessment · decisions · generations" --> API
   MG --> GC --> W
   GC --> MK
   MP --> MK

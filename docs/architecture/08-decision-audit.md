@@ -5,7 +5,7 @@ How one decision is made and audited, as built: the PM rejects a request → a r
 ```mermaid
 sequenceDiagram
   %% Decision audit trail in web/: Pipeline.tsx · RejectDialog.tsx · DecisionLog.tsx · Profiles.tsx · sessions.ts
-  %% Today: stored in this browser (localStorage); "by" = the local who-is-deciding identity (lib/user.ts). Planned: Supabase + login.
+  %% Stored in Supabase via the backend (decisions: append-only; generations), with a local copy; "by" = the local who-is-deciding identity (lib/user.ts) until there is a login.
   autonumber
   actor PM as Product manager
   participant UI as Pipeline list

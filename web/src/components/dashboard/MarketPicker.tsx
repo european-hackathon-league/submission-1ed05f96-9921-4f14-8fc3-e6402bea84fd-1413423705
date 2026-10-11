@@ -19,7 +19,7 @@ export function MarketPicker() {
         Which market are you deciding for?
       </h1>
       <p className="mt-2 max-w-md text-center text-sm text-muted">
-        Pick a market on the globe or below. Requirements, evidence and gaps are shown for that market.
+        Pick a market on the globe or below, then a series. A market without comments falls back to all markets, with a lower-confidence note.
       </p>
 
       <div className="mt-8 w-full max-w-[420px]">

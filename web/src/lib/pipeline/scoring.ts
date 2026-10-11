@@ -7,8 +7,9 @@
  *   score  = base × (1 − penalty) + bonus
  *
  * Pure functions (usable on server and client). The settings store lives in scoring-store.ts (client only).
- * Settings are tuned by the team in /dashboard/settings and stored in this browser for now (Supabase later).
- * The backend agent will apply the same rules before it proposes requests (see docs/architecture/09-scoring-and-memory.md).
+ * Settings are tuned by the team in /dashboard/settings and stored in Supabase through the backend (local copy here).
+ * backend/app/scoring.py applies the same rules (tests pin both to the same numbers); the principle assessor reads the
+ * same memory. Principle fit comes from the assessor when there is one (see docs/architecture/09-scoring-and-memory.md).
  */
 import type { MarketScope } from "@/lib/dashboard-data";
 import type { Decision } from "./profiles";
@@ -107,10 +108,12 @@ export function scoreRequest(
   memory: Map<string, MemoryEntry>,
   s: ScoringSettings,
   now = Date.now(),
+  /** Principle fit 0–1 from the principle assessor (L1). Without one: 1 if the category is in the series focus, else 0.4. */
+  principleFit?: number,
 ): Scored {
   const demand = maxScoped > 0 ? Math.log1p(scoped) / Math.log1p(maxScoped) : 0;
   const backing = Math.min(1, backingCount / 2);
-  const fit = focus.includes(req.category) ? 1 : 0.4;
+  const fit = principleFit ?? (focus.includes(req.category) ? 1 : 0.4);
   const wSum = s.wDemand + s.wBacking + s.wFit || 1;
   const base = (100 * (s.wDemand * demand + s.wBacking * backing + s.wFit * fit)) / wSum;
 

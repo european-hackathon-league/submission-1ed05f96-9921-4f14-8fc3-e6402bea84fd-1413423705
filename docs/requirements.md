@@ -7,7 +7,7 @@ Everything you need to work on the Dixi repo. Commands are for macOS (Homebrew);
 |---|---|
 | **GitHub** account with access to `peresramirez/Dixi`, and an **SSH key** added to GitHub | Clone and push (`git@github.com:peresramirez/Dixi.git`) |
 | **Entire** account (entire.io), signed in with GitHub | Required by the hackathon: every agent session is linked to commits. Submissions without Entire are rejected |
-| **Supabase** account (supabase.com) | Database, auth, storage and vector search for the backend |
+| **Supabase** account (supabase.com) | Database for the backend (principles, decisions, generations, agent runs, settings) |
 | **Vercel** account (vercel.com) | Hosting for the web app (preview + production) |
 | **OpenAI API key** | Agents and image generation (`scripts/generate-image.mjs`). Ask the team; never commit it |
 
@@ -51,12 +51,14 @@ git add .entire/runners && git commit -m "Configure trail runners"
 ```
 ⚠️ If the repository is public, Entire's agent transcripts are public too. Never paste secrets into an agent session.
 
-### Supabase (when the backend starts)
+### Supabase
 ```bash
 supabase login
-supabase init                          # creates supabase/ (config + migrations)
-supabase start                         # local Postgres + Studio; needs Docker running
-supabase link --project-ref <project>  # connect to the hosted project
+supabase link --project-ref <project>  # hosted project (the team's is "Dixi"); supabase/ is already in the repo
+supabase db push                       # apply supabase/migrations
+supabase projects api-keys --project-ref <project>   # service_role key → backend/.env (never commit it)
+cd backend && uv run python -I scripts/seed_principles.py   # L1 principles from data/L1_Files (local)
+# optional local stack instead: supabase start (needs Docker) and point SUPABASE_URL at it
 ```
 
 ### Vercel (web hosting)

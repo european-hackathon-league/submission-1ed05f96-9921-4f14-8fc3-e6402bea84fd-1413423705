@@ -36,7 +36,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 ## 2. Project context
 - **Challenge:** derive, justify and prioritise customer requirements for a BMW successor vehicle (1/5/7 Series; Europe, China, USA; 3–5 years ahead). The product manager stays in control, every decision is traceable, evidence and assumptions stay separate, and conflicts are shown, not averaged away.
 - **Judging rubric:** decision and scoring logic · workflow and human decisions · traceability and auditability (incl. postponements) · quality, usability and feasibility · innovation, scale and business impact · plus "we reward honesty" (surface missing evidence, conflicts and uncertainty). Logic, workflow and traceability come first when deciding what to build.
-- **Product: Dixi**, named after the Dixi 3/15, BMW's first car (1928). A principled, weighted, traceable requirement engine: three layers (L1 principles, L2 evidence, L3 signals), source weights per model, human gates G1–G4, an editable decision memory, lineage from comment to requirement, and "what we don't know" gap cards. Architecture: `docs/architecture/`.
+- **Product: Dixi**, named after the Dixi 3/15, BMW's first car (1928). A principled, weighted, traceable requirement engine: three layers (L1 principles, L2 evidence, L3 social test). **Built:** principle assessor (L1, principles in Supabase), research agent (L2, Tavily), Dixi score with decision memory across generations, PM gate (keep / reject with reason / priority / wishlist), 3 profiles, append-only decision history. **Target design, not built:** gates G1–G4, Codebeamer export, postpone, lineage store, per-model source weights. Keep README and docs honest about this split. As built: `docs/architecture/10-backend-agents.md`; design: `docs/architecture/`.
 - **Mandatory:** the repo must use **Entire** (entire.io): `entire enable --agent claude-code`, connect the repo on entire.io, turn on Runners and Trails. Submissions without Entire are rejected. Agent transcripts are uploaded on push (and are public if the repo is public): never paste secrets into a session. Work goes through trails (§5).
 
 ## 3. Repo map
@@ -45,7 +45,9 @@ _Owner: <name> · created <YYYY-MM-DD>_
 | Path | In git | What |
 |---|---|---|
 | `web/` | ✅ | **The Dixi app**: Next.js 16 (App Router), light mode. `/` landing (globe hero with market highlights and popping comments, process, product, contact), `/dashboard` (globe market picker), `/dashboard/[market]`. **Read `web/AGENTS.md`**: Next 16 has breaking changes; check `web/node_modules/next/dist/docs/` before using an API. Shared globe: `web/src/components/globe/MarketGlobe.tsx`. Data modules: `web/src/lib/markets.ts`, `web/src/lib/dashboard-data.ts` (example data, no real BMW data) |
-| `backend/` | ✅ | Planned API + agents (FastAPI, Pydantic AI, Supabase). See its README |
+| `backend/` | ✅ | API + agents: FastAPI, Pydantic AI (research agent with Harness sub-agents on Tavily MCP; principle assessor), store for principles, decisions, generations, agent runs and settings in Supabase. `uv run pytest -q`, `uv run fastapi dev`, `uv run python -I scripts/seed_principles.py`. See its README |
+| `.github/` | ✅ | `workflows/monthly-refresh.yml`: the monthly refresh job, off unless `DIXI_REFRESH_ENABLED` is true |
+| `supabase/` | ✅ | Database schema: `supabase/migrations/*.sql` (applied to the hosted project *Dixi*). `.temp/` stays local |
 | `docs/` | ✅ | `docs/tech-stack/` (technology choices, versions, alternatives, sources), `docs/requirements.md` (developer setup: tools, accounts, Supabase CLI, Vercel, Entire) and architecture/design only: `docs/architecture/*.md` (Mermaid diagrams inside Markdown) + `docs/README.md` |
 | `branding/` | ✅ | Dixi brand: logos (light/dark/mark), `tokens.css` (mirrors `web/src/app/globals.css`), `brand-sheet.html`, guide |
 | `scripts/` | ✅ | `generate-image.mjs`: OpenAI image generation; key from `.env`; each image gets an AI-generated `.json` sidecar |
@@ -61,7 +63,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 - **New top-level folders are ignored by default.** If a new folder must be committed, add a `!/<folder>/` line to `.gitignore` on purpose.
 - **Facts:** every external claim gets a checked source URL; mark inferences as *inferred*.
 - **Images:** only images with a clear licence; AI-generated images get a visible "AI-generated" label in the UI (EU AI Act Art. 50) and a `.json` sidecar. Never generate BMW logos or real people.
-- **Stack:** Next.js + TypeScript + Tailwind (web), FastAPI + Pydantic AI + Supabase/pgvector + OpenAI (backend). Details: `docs/tech-stack/README.md`.
+- **Stack:** Next.js + TypeScript + Tailwind (web), FastAPI + Pydantic AI + Supabase (Postgres; pgvector planned) + OpenAI + Tavily MCP (backend). Details: `docs/tech-stack/README.md`.
 - **Python:** `uv run --with <pkgs> python -I …`; don't install packages globally. **Node:** pnpm in `web/`.
 - **Output:** HTML deliverables are local files by default; publish claude.ai artifacts only when the user asks.
 - **Research:** prefer the exa MCP, tavily as a second opinion; keep query counts modest.

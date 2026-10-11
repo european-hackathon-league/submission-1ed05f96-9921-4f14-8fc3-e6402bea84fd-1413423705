@@ -1,0 +1,22 @@
+[project]
+name = "dixi-backend"
+version = "0.1.0"
+description = "Dixi API and agents: research sub-agents with Tavily MCP, typed outputs, FastAPI"
+requires-python = "==3.13.*"
+dependencies = [
+    "fastapi[standard]",
+    "pydantic-ai-slim[openai,mcp]",
+    "pydantic-ai-harness",
+    "pydantic-settings",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio"]
+# Monthly refresh job on the BMW export (reads the xlsx files with the data script's own code)
+jobs = ["pandas", "openpyxl"]
+
+[tool.fastapi]
+entrypoint = "app.main:app"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

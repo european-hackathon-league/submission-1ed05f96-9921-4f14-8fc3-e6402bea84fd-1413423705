@@ -17,8 +17,8 @@ flowchart TD
   subgraph analyse ["AI analysis"]
     direction TB
     l2in["L2 · Customer feedback<br/>likes · dislikes · wishes"]
-    research["L2 · Research agent<br/>competitor features people like<br/>+ market trends, with sources"]
-    cluster["Compress + cluster<br/>into feature requests"]
+    research["L2 · Research agent<br/>competitor features people like<br/>+ market trends, with sources<br/>saved research, or a live run the PM starts<br/>(backend: lead + 2 scouts on Tavily, gaps listed)"]
+    cluster["Group feedback into feature requests<br/>(BMW taxonomy, data script)"]
     cat["Categorise<br/>Exterior · Interior · Digital · Powertrain"]
     urgency["Urgency<br/>how many customers ask for it"]
     link["Link feedback ↔ competitors / trends<br/>matching requests get highlighted"]
@@ -26,7 +26,9 @@ flowchart TD
     research --> link
   end
 
-  memory[("Decision memory<br/>past keeps / rejects + reasons<br/>from earlier generations")] --> score["Dixi score<br/>demand · backing · principle fit<br/>past reject lowers it, unless demand grew"]
+  memory[("Decision memory<br/>past keeps / rejects + reasons<br/>from earlier generations (Supabase)")] --> score["Dixi score<br/>demand · backing · principle fit<br/>past reject lowers it, unless demand grew"]
+  assessor["L1 · Principle assessor (AI)<br/>fit per request · cited principles<br/>evidence vs assumptions · conflicts"] -- "principle fit" --> score
+  l1db[("L1 principles<br/>series · market · Group<br/>(Supabase)")] --> assessor
   settings["Settings<br/>scoring weights"] --> score
   link --> score --> list["One list<br/>competitors &amp; trends on top · feature requests below<br/>filter: category · urgency · backed by market"]
 

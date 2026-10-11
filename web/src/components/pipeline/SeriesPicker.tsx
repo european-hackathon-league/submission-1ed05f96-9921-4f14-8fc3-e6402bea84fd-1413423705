@@ -6,9 +6,9 @@ import { CAR_IMAGES } from "@/lib/car-images";
 import type { MarketScope } from "@/lib/dashboard-data";
 import { marketById } from "@/lib/markets";
 import { seriesData } from "@/lib/pipeline/load";
-import { MARKET_SIGNALS } from "@/lib/pipeline/market-signals";
-import { marketVolume, signalsFor } from "@/lib/pipeline/profiles";
+import { marketVolume } from "@/lib/pipeline/profiles";
 import { SERIES } from "@/lib/pipeline/series";
+import { SignalCount } from "./SignalCount";
 
 /** Step 2: choose the series. Tall photo cards; each opens the requirement pipeline for this market + series. */
 export function SeriesPicker({ scope }: { scope: MarketScope }) {
@@ -34,7 +34,6 @@ export function SeriesPicker({ scope }: { scope: MarketScope }) {
           const img = CAR_IMAGES[s.id].front;
           const data = seriesData(s.id);
           const n = marketVolume(data, scope);
-          const signals = signalsFor(MARKET_SIGNALS, s.id, scope).length;
           const [code, line] = s.segment.split(" · ");
           return (
             <li key={s.id}>
@@ -78,7 +77,7 @@ export function SeriesPicker({ scope }: { scope: MarketScope }) {
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/15 backdrop-blur-md">
                       <Radar aria-hidden className="size-3.5 text-brand-sky" />
-                      {signals} signals
+                      <SignalCount scope={scope} series={s.id} />
                     </span>
                   </div>
                   <span className="mt-auto inline-flex h-10 items-center justify-between rounded-full bg-white px-4 text-sm font-medium text-ink transition-colors group-hover:bg-brand group-hover:text-white">

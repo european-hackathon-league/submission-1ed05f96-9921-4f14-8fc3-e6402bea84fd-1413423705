@@ -1,7 +1,7 @@
 /* Coded product preview: a catalogue-style profile page next to the generations list.
  * Sample content written for the landing page, not BMW data. */
 import Image from "next/image";
-import { Download, History, RotateCcw, Columns2, FolderOpen, X } from "lucide-react";
+import { Download, History, RotateCcw, FolderOpen, X } from "lucide-react";
 import { CAR_IMAGES } from "@/lib/car-images";
 
 const COVER = CAR_IMAGES.G60.front;
@@ -147,7 +147,6 @@ export function ProductMock() {
             <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px] font-medium text-ink-soft">
               {[
                 { label: "Reopen", Icon: FolderOpen },
-                { label: "Compare", Icon: Columns2 },
                 { label: "Rebuild", Icon: RotateCcw },
               ].map(({ label, Icon }) => (
                 <span key={label} className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 ring-1 ring-line">

@@ -1,6 +1,6 @@
 # Dixi tech stack
 
-Status as of 10 Oct 2026. ✅ = in use · 🟡 = planned · ⚪ = considered, not chosen.
+Status as of 11 Oct 2026. ✅ = in use · 🟡 = planned · ⚪ = considered, not chosen.
 
 ## Frontend: `web/` ✅
 | Layer | Choice | Version | Why |
@@ -17,14 +17,16 @@ Status as of 10 Oct 2026. ✅ = in use · 🟡 = planned · ⚪ = considered, no
 
 Run it: `cd web && pnpm install && pnpm dev` → http://localhost:3000. Note: Next.js 16 has breaking changes; read `web/AGENTS.md` (from the repo root).
 
-## Backend: `backend/` 🟡
+## Backend: `backend/` ✅
 | Layer | Choice | Why | Alternatives |
 |---|---|---|---|
 | API | **FastAPI** (Python) | Same language as the agents; async; OpenAPI for the frontend | Next.js route handlers only |
-| Agents | **Pydantic AI** (v2) + Logfire tracing | Typed structured outputs = our data contracts; tracing gives traceability | ⚪ OpenAI Agents SDK (simplest if OpenAI-only), ⚪ LangGraph (explicit graphs, more boilerplate) |
-| Database | **Supabase** (Postgres, auth, storage, realtime) | One store for evidence, requirements, decisions, lineage and memory; realtime updates the dashboard | Neon + S3 |
-| Vector search | **pgvector** in Supabase (HNSW + full-text, hybrid via RRF) | Enough for ~100k–1M items; one service less | ⚪ Qdrant (only if pgvector is not enough) |
-| LLMs | **OpenAI**: small tier for labelling (Batch API), flagship for requirement drafting | Structured outputs; embeddings `text-embedding-3-small` at 512 dims | Anthropic, Gemini (Pydantic AI is model-agnostic) |
+| Agents | ✅ **Pydantic AI** 2.55 + **Pydantic AI Harness** 0.55 (`SubAgents`: lead researcher delegates to scout sub-agents) + Logfire tracing (planned) | Typed structured outputs = our data contracts; tracing gives traceability | ⚪ OpenAI Agents SDK (simplest if OpenAI-only), ⚪ LangGraph (explicit graphs, more boilerplate) |
+| Web search | ✅ **Tavily remote MCP** (`https://mcp.tavily.com/mcp/`, `tavily_search` + `tavily_extract` only) | No search engine of our own; agents get it as an MCP toolset; 1,000 free credits/month | Exa, own scraping |
+| Hosting | ✅ **FastAPI Cloud** (public beta, Hobby tier) | `fastapi deploy` from `backend/`; uv + `pyproject.toml`; secrets via `fastapi cloud env set --secret` | Railway, Fly.io |
+| Database | ✅ **Supabase** (Postgres, hosted project *Dixi*): principles, decisions, generations, agent runs, settings; schema in `supabase/migrations`, backend access via REST with the secret key | One store for principles, decisions, runs and memory | Neon + S3 |
+| Vector search | 🟡 **pgvector** in Supabase, planned for matching reworded requests in decision memory (today: exact title) | Enough for ~100k–1M items; one service less | ⚪ Qdrant (only if pgvector is not enough) |
+| LLMs | ✅ **OpenAI** via Pydantic AI (Responses API): fast model (`OPENAI_MODEL_FAST`) for the research scouts, strong model (`OPENAI_MODEL_STRONG`) for the lead researcher and the principle assessor; `/api/scoring-advice` for plain-words settings. 🟡 Planned: labelling with the Batch API, requirement drafting, embeddings `text-embedding-3-small` at 512 dims | Structured outputs = our data contracts | Anthropic, Gemini (Pydantic AI is model-agnostic) |
 | Images | **OpenAI image models** (`scripts/generate-image.mjs`) | Multi-image edits for compositing; every image gets an AI-generated sidecar | FLUX.2 on fal.ai |
 | Video (optional) | **fal.ai** (Kling / Veo image-to-video) | OpenAI shut down its Sora video API on 24 Sep 2026 | — |
 | Fine-tuning | ⚪ **Not planned** | LLM labelling checked against a hand-labelled sample is faster and explainable | Later: a small classifier distilled from LLM labels |
@@ -47,7 +49,8 @@ Run it: `cd web && pnpm install && pnpm dev` → http://localhost:3000. Note: Ne
 
 ## Sources
 - Next.js docs (bundled): `web/node_modules/next/dist/docs/`
-- Pydantic AI: https://github.com/pydantic/pydantic-ai/releases
+- Pydantic AI: https://github.com/pydantic/pydantic-ai/releases · MCP client: https://pydantic.dev/docs/ai/mcp/client/ · harness: https://pydantic.dev/docs/ai/harness/
+- Tavily MCP: https://docs.tavily.com/documentation/mcp · FastAPI Cloud: https://fastapicloud.com/docs/
 - OpenAI models: https://developers.openai.com/api/docs/models · image edits: https://developers.openai.com/api/reference/resources/images/methods/edit/ · video (Sora shutdown): https://developers.openai.com/api/docs/guides/video-generation
 - fal.ai pricing: https://fal.ai/pricing
 - Supabase hybrid search: https://supabase.com/docs/guides/ai/hybrid-search · pricing: https://supabase.com/pricing

@@ -1,6 +1,6 @@
 # System overview
 
-The whole system as built: L1 BMW principles and L2 market evidence (including a research agent for competitors and trends) → AI analysis into feature requests → the product manager's gate (keep, reject with a required reason, priority, wishlist) → three car profiles → each build saved as a generation → L3 social test, which runs only after profiles exist. The detailed screen-by-screen path is in [`07-pm-workflow.md`](07-pm-workflow.md); how a decision is audited is in [`08-decision-audit.md`](08-decision-audit.md).
+The whole system as built: L1 BMW principles and L2 market evidence (including a research agent for competitors and trends) → AI analysis into feature requests → the product manager's gate (keep, reject with a required reason, priority, wishlist) → three car profiles → each build saved as a generation → L3 social test, which runs only after profiles exist. The detailed screen-by-screen path is in [`07-pm-workflow.md`](07-pm-workflow.md); how a decision is audited is in [`08-decision-audit.md`](08-decision-audit.md); the backend research agents as built (and what is still deterministic code) are in [`10-backend-agents.md`](10-backend-agents.md).
 
 ```mermaid
 flowchart TB
@@ -17,14 +17,15 @@ flowchart TB
 
   subgraph LAY["② Layers L1 + L2"]
     direction LR
-    L1[("L1 · BMW principles<br/>per series · owner per principle")]
-    RA["Research agent<br/>competitor features people like<br/>+ market trends, with sources"]
+    L1[("L1 · BMW principles (Supabase)<br/>series · market · Group<br/>owner + sources per principle")]
+    PA["Principle assessor (AI)<br/>fit per request · evidence vs assumptions<br/>conflicts · gaps"]
+    RA["Research agent (backend, live)<br/>lead + competitor and trend scouts<br/>Tavily MCP · sources checked · gaps"]
     L2[("L2 · Market evidence<br/>feature requests · studies · sales<br/>option list · market signals")]
   end
 
   subgraph AN["③ AI analysis (per market + series)"]
     direction TB
-    CL["Cluster feedback into feature requests<br/>Exterior · Interior · Digital · Powertrain"]
+    CL["Group feedback into feature requests (data script)<br/>Exterior · Interior · Digital · Powertrain"]
     UR["Urgency<br/>how many customers ask, in this market"]
     LK["Link requests ↔ competitors / trends"]
   end
@@ -41,12 +42,16 @@ flowchart TB
   BU["⑤ Build 3 car profiles<br/>Fix the basics · Tech-forward · Comfort &amp; craft<br/>follow the PM's priority<br/>score = L1 (principles + priority) + L2 coverage"]
   GEN[("⑥ Generations<br/>profiles · decisions · priority<br/>saved per build")]
   PDF[["Profile page + PDF<br/>catalogue style · decision trail"]]
+  CHAT["Generation chat (AI)<br/>PM asks about this build<br/>answers from retrieved facts + sources"]
   L3["⑦ L3 · Social test<br/>which profile tracks better (simulated)<br/>weight: 7 Series 2% · 5 Series 8% · 1 Series 20%"]
 
   S1 --> L2
   S2 --> RA --> L2
   S4 --> L1
   L2 --> CL --> UR --> LK
+  L1 --> PA
+  LK --> PA
+  PA -- "principle fit in the score" --> KP & RJ & PR & WL
   LK --> KP & RJ & PR & WL
   KP & RJ & WL -- "who · when · why" --> DM
   KP & PR & WL --> BU
@@ -54,6 +59,8 @@ flowchart TB
   DM -. "rejected requests stay out" .-> BU
   BU --> GEN --> PDF
   DM --> PDF
+  PDF --> CHAT
+  GEN -. "facts: profiles · decisions · principles · runs" .-> CHAT
   GEN -- "after profiles exist" --> L3
   L3 -- "updates scores" --> GEN
   GEN -. "edit and rebuild: decisions + priority loaded" .-> GATE
@@ -70,7 +77,7 @@ flowchart TB
   class S1,S2 src
   class S4,KP,RJ,PR,WL human
   class CL,UR,LK auto
-  class RA,BU propose
+  class RA,BU,PA,CHAT propose
   class L1 l1
   class L2 l2
   class L3 l3

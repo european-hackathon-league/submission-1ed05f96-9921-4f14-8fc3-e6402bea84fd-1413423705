@@ -1,6 +1,6 @@
 # Human-in-the-loop map
 
-Where the human sits in the pipeline, and why.
+Where the human sits in the **target** pipeline, and why. Gates G1–G4, the engineering check and the Codebeamer hand-off are design, not built; what is built (PM gate: keep / reject with reason / priority / wishlist, principle assessor, research agent) is in [`10-backend-agents.md`](10-backend-agents.md).
 
 ```mermaid
 flowchart LR

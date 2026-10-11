@@ -2,6 +2,7 @@
 
 import { History, RotateCcw, Scale, TrendingUp } from "lucide-react";
 import { DEFAULT_SCORING, scoreRequest, type MemoryEntry, type ScoringSettings } from "@/lib/pipeline/scoring";
+import { API_URL } from "@/lib/api";
 import { saveScoring, useScoring } from "@/lib/pipeline/scoring-store";
 import type { FeatureRequest } from "@/lib/pipeline/types";
 import { WeightsAssistant } from "./WeightsAssistant";
@@ -104,7 +105,7 @@ export function ScoringSettingsForm() {
 
         <button
           type="button"
-          onClick={() => saveScoring(DEFAULT_SCORING)}
+          onClick={() => saveScoring(DEFAULT_SCORING, { source: "reset" })}
           className="inline-flex items-center gap-1.5 self-start rounded-full px-4 py-2 text-sm text-ink-soft ring-1 ring-line hover:bg-bg-soft"
         >
           <RotateCcw aria-hidden className="size-4" /> Reset to defaults
@@ -133,7 +134,11 @@ export function ScoringSettingsForm() {
           <p className="font-mono">reject: score = base × (1 − penalty × strength)</p>
           <p className="font-mono">resurfaced (growth ≥ threshold): score = base</p>
           <p className="font-mono">keep: score = base + 10 × bonus × strength</p>
-          <p className="mt-2">Saved in this browser for now. The backend agent applies the same rules before it proposes requests.</p>
+          <p className="mt-2">
+            {API_URL
+              ? "Applied settings are saved in Supabase with a change log (who, how, before → after). The backend uses the same formula for decision memory, and the principle assessor supplies the fit."
+              : "Saved in this browser (no backend connected). With the backend, settings and their change log are stored in Supabase."}
+          </p>
         </section>
       </aside>
     </div>

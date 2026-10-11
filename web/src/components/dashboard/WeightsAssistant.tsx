@@ -70,7 +70,7 @@ export function WeightsAssistant() {
 
   const apply = () => {
     if (!advice) return;
-    saveScoring(advice.settings);
+    saveScoring(advice.settings, { source: advice.model ? `ai:${advice.model}` : advice.source, instruction: asked, changes: advice.changes });
     const who = currentUser();
     const entry: ScoringChange = { at: new Date().toISOString(), by: who.name, role: who.role, instruction: asked, source: advice.source, model: advice.model, changes: advice.changes };
     const next = [entry, ...readLog()].slice(0, 20);

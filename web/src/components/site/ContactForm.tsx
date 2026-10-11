@@ -3,7 +3,7 @@
 import { Check, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-/* Client-side only: there is no backend. Submitting shows a thank-you state; nothing is sent. */
+/* Client-side only: there is no backend. Submitting shows a demo notice with the team email; nothing is sent. */
 export function ContactForm() {
   const [sent, setSent] = useState(false);
 
@@ -19,9 +19,15 @@ export function ContactForm() {
           <Check className="size-4" aria-hidden />
         </span>
         <div>
-          <p className="font-semibold text-ink">Thanks, we&apos;ll get back to you.</p>
+          <p className="font-semibold text-ink">
+            This form is a demo and nothing was sent. Please email{" "}
+            <a href="mailto:team@dixi.dev" className="text-brand hover:text-brand-deep">
+              team@dixi.dev
+            </a>
+            .
+          </p>
           <button type="button" onClick={() => setSent(false)} className="mt-1 text-sm font-medium text-brand hover:text-brand-deep">
-            Send another message
+            Back to the form
           </button>
         </div>
       </div>
@@ -52,7 +58,7 @@ export function ContactForm() {
           type="submit"
           className="inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[0.95rem] font-medium text-white shadow-card transition-colors hover:bg-brand-deep motion-reduce:transition-none"
         >
-          Send message <Send className="size-4" aria-hidden />
+          Send (demo) <Send className="size-4" aria-hidden />
         </button>
       </div>
     </form>

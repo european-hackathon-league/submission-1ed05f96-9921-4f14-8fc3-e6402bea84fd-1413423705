@@ -66,7 +66,16 @@ export interface Profile {
   backing: MarketSignal[];
   why: string[];
   score: { l1: number; l2: number; l3: number | null; total: number };
+  /** L1 check from the principle assessor; absent when the build had no assessment (score used the series focus). */
+  principles?: {
+    assessed: number;
+    supports: string[];
+    tensions: { title: string; ids: string[]; rationale: string }[];
+  };
 }
+
+/** Principle fit per request id, from the principle assessor (lib/pipeline/principles.ts). */
+export type FitMap = Map<string, { fit: number; supports: string[]; tensions: string[]; rationale: string }>;
 
 interface Archetype {
   id: string;
@@ -123,6 +132,7 @@ export function buildProfiles(
   social: Record<string, number> | null,
   wishlist: MarketSignal[] = [],
   signals: MarketSignal[] = [],
+  fits: FitMap = new Map(),
 ): Profile[] {
   const scopedKept = kept.map((r, i) => ({ ...r, scoped: scopedMentions(r, scope, fallback), priority: i + 1 }));
   const keptTotal = scopedKept.reduce((a, r) => a + r.scoped, 0) || 1;
@@ -137,7 +147,11 @@ export function buildProfiles(
     const inFocus = picked.filter((r) => cfg.focus.includes(r.category)).length;
     /* L1 also rewards following the PM's priority order: the PM's ranking is a human principle for this decision. */
     const prioFit = picked.reduce((sum, r) => sum + 1 / r.priority, 0) / scopedKept.slice(0, picked.length).reduce((sum, r) => sum + 1 / r.priority, 0);
-    const l1 = 0.5 + 0.25 * (inFocus / Math.max(1, picked.length)) + 0.25 * prioFit;
+    /* L1 = how well the requirements fit BMW's principles (assessor fit, mean) + how closely the profile follows the PM's
+     * priority. Without an assessment: the series-focus share stands in for principle fit, and the label says so. */
+    const assessed = picked.map((r) => fits.get(r.id)).filter((f) => f !== undefined);
+    const principleFit = assessed.length ? assessed.reduce((s, f) => s + f.fit, 0) / assessed.length : null;
+    const l1 = principleFit !== null ? 0.7 * principleFit + 0.3 * prioFit : 0.5 + 0.25 * (inFocus / Math.max(1, picked.length)) + 0.25 * prioFit;
     const l2 = covered / keptTotal;
     const l3 = social ? social[a.id] ?? null : null;
     const w3 = l3 === null ? 0 : cfg.l3Weight;
@@ -153,7 +167,9 @@ export function buildProfiles(
     const tops = picked.filter((r) => r.priority <= 3).map((r) => `#${r.priority}`);
     const why = [
       `Covers ${covered.toLocaleString("en")} customer mentions, ${Math.round(l2 * 100)}% of everything you kept.`,
-      `${inFocus} of ${picked.length} requirements match the ${cfg.name}'s focus on ${cfg.focus.join(" and ")} (BMW principles).`,
+      principleFit !== null
+        ? `Principle fit ${Math.round(principleFit * 100)}% across ${assessed.length} assessed requirements (L1 principle assessor).`
+        : `${inFocus} of ${picked.length} requirements match the ${cfg.name}'s focus on ${cfg.focus.join(" and ")} (series focus; principles not assessed).`,
       tops.length ? `Takes your top priorities ${tops.join(", ")}.` : "Takes none of your top-3 priorities.",
       `Leans on ${cats.join(", ")}.`,
       left.length ? `Leaves out ${left.slice(0, 2).map((r) => r.title).join(" and ")}${left.length > 2 ? ` and ${left.length - 2} more` : ""}.` : "Includes every request you kept.",
@@ -162,7 +178,16 @@ export function buildProfiles(
     if (wishes.length) why.push(`Adds ${wishes.length} item${wishes.length > 1 ? "s" : ""} from your wishlist: ${wishes.map((w) => w.title).join(", ")}.`);
     if (fallback) why.push("No comments from this market for this series: built on all markets, so confidence is lower.");
 
-    return { id: a.id, name: a.name, tagline: a.tagline, requests: picked, wishes, backing, why, score: { l1, l2, l3, total } };
+    const tensions = picked
+      .map((r) => ({ r, f: fits.get(r.id) }))
+      .filter((x) => x.f && x.f.tensions.length)
+      .map((x) => ({ title: x.r.title, ids: x.f!.tensions, rationale: x.f!.rationale }));
+    if (tensions.length) why.push(`${tensions.length} requirement${tensions.length > 1 ? "s" : ""} strain a principle: ${tensions.map((t) => `${t.title} (${t.ids.join(", ")})`).join("; ")}.`);
+    const principles = principleFit !== null
+      ? { assessed: assessed.length, supports: [...new Set(assessed.flatMap((f) => f.supports))].sort(), tensions }
+      : undefined;
+
+    return { id: a.id, name: a.name, tagline: a.tagline, requests: picked, wishes, backing, why, score: { l1, l2, l3, total }, principles };
   }).sort((x, y) => y.score.total - x.score.total);
 }
 

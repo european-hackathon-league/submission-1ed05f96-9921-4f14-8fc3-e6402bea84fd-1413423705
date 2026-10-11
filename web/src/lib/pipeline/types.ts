@@ -34,6 +34,8 @@ export interface FeatureRequest {
   summary: string;
   /** Unique feedback records behind this request. */
   mentions: number;
+  /** Sample of BMW record ids behind the request (ids only, local data; absent in the example set). */
+  recordIds?: string[];
   /** Mentions per market (only markets with data). */
   byMarket: Partial<Record<DataMarket, number>>;
   /** How the mentions split by feedback type. */
@@ -59,7 +61,7 @@ export interface SeriesData {
   /** What customers like most (for context on the profile pages). */
   strengths: { title: string; mentions: number }[];
   /** Customer-study scores per market (0–10 for CN/EU; US uses its own 1–7 scale and is converted ×10/7). */
-  studies: { market: MarketId; attribute: string; score: number }[];
+  studies: { market: MarketId; attribute: string; score: number; ref?: string | null }[];
   /** Units per market and year (2030 is BMW's forecast). */
   sales: { market: MarketId | "ROW"; y2024: number | null; y2025: number | null; y2030: number | null }[];
   /** Option list (Germany, July 2026), trimmed to the useful items. */

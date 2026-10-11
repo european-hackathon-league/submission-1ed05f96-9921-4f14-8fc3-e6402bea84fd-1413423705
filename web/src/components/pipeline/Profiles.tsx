@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, Download, ExternalLink, Info, Star, Trophy } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, Download, ExternalLink, FileSearch, Info, Star, Trophy } from "lucide-react";
 import { useState } from "react";
 import type { CarImage } from "@/lib/car-images";
 import { draftTarget, type Decisions, type Profile } from "@/lib/pipeline/profiles";
@@ -10,6 +11,8 @@ import type { Session } from "@/lib/pipeline/sessions";
 import { CATEGORIES, type FeatureRequest, type MarketSignal } from "@/lib/pipeline/types";
 import { PROFILE_COLOR } from "./Analytics";
 import { CATEGORY_ICON, SIGNAL_ICON } from "./icons";
+import { GenerationChat } from "./GenerationChat";
+import { evidenceHref } from "@/lib/pipeline/evidence";
 import { RequestDetails } from "./RequestCard";
 
 const layerParts = (score: Profile["score"], l3Weight: number) => {
@@ -186,6 +189,13 @@ export function ProfileDetail({
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-brand">
           <ArrowLeft aria-hidden className="size-4" /> All profiles
         </button>
+        <div className="flex items-center gap-2">
+        <Link
+          href={evidenceHref(session.id, profile.id)}
+          className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium text-ink ring-1 ring-line transition-colors hover:text-brand hover:ring-brand/40"
+        >
+          <FileSearch aria-hidden className="size-4" /> Evidence
+        </Link>
         <button
           type="button"
           onClick={() => window.print()}
@@ -194,6 +204,7 @@ export function ProfileDetail({
         >
           <Download aria-hidden className="size-4" /> Download PDF
         </button>
+        </div>
       </div>
 
       <RequestDetails
@@ -245,7 +256,7 @@ export function ProfileDetail({
               <table className="w-full text-[13px]">
                 <Band cols={2}>Score</Band>
                 <tbody>
-                  <Row label="L1 · Principles and your priority" value={Math.round(profile.score.l1 * 100)} />
+                  <Row label={profile.principles ? "L1 · Principle fit (assessor) and your priority" : "L1 · Series focus and your priority"} value={Math.round(profile.score.l1 * 100)} />
                   <Row label="L2 · Evidence covered" value={Math.round(profile.score.l2 * 100)} />
                   <Row label={`L3 · Social test (max ${Math.round(cfg.l3Weight * 100)}%)`} value={profile.score.l3 === null ? "not run" : Math.round(profile.score.l3 * 100)} />
                   <Row label="Total score" value={Math.round(profile.score.total * 100)} strong />
@@ -395,7 +406,27 @@ export function ProfileDetail({
                   ))}
                 </tbody>
               </table>
-              <p className="text-[11px] text-muted">■ Every principle is respected by this profile.</p>
+              {profile.principles ? (
+                profile.principles.tensions.length === 0 ? (
+                  <p className="text-[11px] text-muted">
+                    ■ The principle assessor found no tension with BMW principles in the {profile.principles.assessed} assessed requirements
+                    {profile.principles.supports.length > 0 && ` (supports ${profile.principles.supports.join(", ")})`}.
+                  </p>
+                ) : (
+                  <div className="text-[11px] text-human">
+                    <p>□ {profile.principles.tensions.length} requirement{profile.principles.tensions.length > 1 ? "s" : ""} strain a principle:</p>
+                    <ul className="list-disc pl-4">
+                      {profile.principles.tensions.map((t) => (
+                        <li key={t.title}>
+                          {t.title} ({t.ids.join(", ")}): {t.rationale}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              ) : (
+                <p className="text-[11px] text-muted">□ Principles were not assessed for this build: L1 uses the series focus and your priority.</p>
+              )}
             </CatalogSection>
           </div>
 
@@ -472,11 +503,13 @@ export function ProfileDetail({
             <Legend />
             <p className="mt-2">
               Evidence: BMW customer feedback, customer studies, sales and the German option list (July 2026, EUR incl. 19% VAT). Competitor and trend signals link their
-              public sources. Principles and competitor notes are example content; the social test is simulated. {image && `${image.credit}, modified.`}
+              public sources. Series fundamentals and competitor notes are example content; market principles come from the team&apos;s public-source research; the social test is simulated. {image && `${image.credit}, modified.`}
             </p>
           </footer>
         </div>
       </article>
+
+      <GenerationChat session={session} profileId={profile.id} />
     </div>
   );
 }

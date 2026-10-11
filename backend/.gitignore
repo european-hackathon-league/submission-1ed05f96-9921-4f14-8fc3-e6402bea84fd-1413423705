@@ -1,0 +1,7 @@
+# Also read by `fastapi deploy`: none of this is uploaded to FastAPI Cloud.
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+# Local link to the FastAPI Cloud app (created by the first deploy / `fastapi cloud link`)
+.fastapicloud/
