@@ -175,7 +175,7 @@ Built by `web/src/lib/pipeline/evidence.ts` (`buildEvidence`).
 
 | Chip | What it shows | Reference |
 |---|---|---|
-| `BMW-FEEDBACK-<series>` | Unique records per market, wishes / hard to use / defects, channels, BMW taxonomy topics | Sample **BMW record ids** (e.g. `G60-0034`), ids only |
+| `BMW-FEEDBACK-<series>` | Unique records per market, wishes / hard to use / defects, channels, BMW taxonomy topics | Sample **BMW record ids** (format `G60-nnnn`), ids only |
 | `BMW-STUDIES` | Customer-study scores for the attributes linked to the request (explicit `STUDY_LINKS` mapping, reviewed by hand) | The **workbook cell**, e.g. `CN_EU_2025!E42` or `US_2025!C905:C911` |
 | `BMW-SALES` | Units 2024 / 2025 / 2030 forecast in that market | sales sheet |
 | `BMW-OPTIONS` | Related options already on today's price list | option code and price |
