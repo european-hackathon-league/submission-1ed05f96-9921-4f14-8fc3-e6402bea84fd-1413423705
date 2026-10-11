@@ -1,0 +1,4 @@
+# Extra safety on top of .gitignore: never upload secrets or local envs to FastAPI Cloud.
+.env
+.env.*
+.venv/
