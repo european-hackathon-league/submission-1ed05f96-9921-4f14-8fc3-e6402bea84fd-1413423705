@@ -10,17 +10,17 @@ const PHOTO_SRC = "/images/product-dashboard.png";
 const FEATURES: { title: string; body: string; Icon: LucideIcon }[] = [
   {
     title: "Traceable decisions",
-    body: "Every keep, reject and priority change records who made it, when and why. Rejects always carry a written reason.",
+    body: "Every keep, reject and wishlist star records who made it and when. Rejects always carry a written reason. Your priority order is saved.",
     Icon: UserCheck,
   },
   {
     title: "Competitors & trends with sources",
-    body: "A research agent finds what rivals offer and where the market is heading, and links every claim to its source.",
+    body: "On request, a research agent searches the web for what rivals offer and where the market is heading. Every source link is checked, and what it could not find is listed.",
     Icon: Radar,
   },
   {
     title: "Generations you can reopen",
-    body: "Every build is saved. Reopen, compare or rebuild it, and export any profile as a catalogue-style PDF.",
+    body: "Every build is saved. Reopen it, edit and rebuild it, and save any profile as a catalogue-style PDF.",
     Icon: FileDown,
   },
 ];
@@ -45,8 +45,8 @@ export function Product() {
           A car profile you can defend, <span className="text-brand">down to the last decision.</span>
         </h2>
         <p className="mt-4 max-w-2xl leading-relaxed text-ink-soft">
-          Each build ends in two or three profiles laid out like a BMW option list: the cover, the requirements in your priority order,
-          why the agent chose them and the decisions behind them.
+          Each build ends in three profiles laid out like a BMW option list: the cover, the requirements in your priority order,
+          why each was chosen, how it fits BMW&apos;s principles and the decisions behind it.
         </p>
 
         <div className="relative mt-12">
@@ -63,7 +63,7 @@ export function Product() {
             </div>
             <div className="border-l-2 border-wait pl-6">
               <Quote>
-                Know what you don&apos;t know. <span className="text-muted">Gaps and conflicts are shown, never averaged away.</span>
+                Know what you don&apos;t know. <span className="text-muted">The principle check lists gaps and conflicts, never averages them away.</span>
               </Quote>
             </div>
           </div>

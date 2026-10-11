@@ -21,8 +21,8 @@ const STEPS: Step[] = [
   { title: "Pick a market", body: "Spin the globe and choose Europe, China, the USA or another market.", Icon: Globe2 },
   { title: "Pick the car", body: "1 Series, 5 Series or 7 Series.", Icon: Car },
   {
-    title: "AI analysis",
-    body: "Dixi reads everything it knows about this car in this market.",
+    title: "Analysis",
+    body: "Dixi gathers what it knows about this car in this market, and an AI agent checks each request against BMW's principles.",
     Icon: Sparkles,
     detail: (
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -30,20 +30,20 @@ const STEPS: Step[] = [
           <p className="flex items-center gap-2 text-sm font-semibold text-l1">
             <Landmark className="size-4" aria-hidden /> BMW principles
           </p>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">The fundamentals the car must respect. Owned by managers.</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">The fundamentals the car must respect: series, market and BMW Group principles.</p>
         </div>
         <div className="rounded-xl bg-l2-soft p-3.5">
           <p className="flex items-center gap-2 text-sm font-semibold text-l2">
             <MessagesSquare className="size-4" aria-hidden /> Market evidence
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">
-            Customer feedback, studies, sales and today&apos;s option list. A research agent adds competitors and trends, with sources.
+            Customer feedback, studies, sales and today&apos;s option list. When you run it, a research agent adds competitors and trends, with checked sources.
           </p>
         </div>
         <div className="rounded-xl bg-bg-soft p-3.5 ring-1 ring-line sm:col-span-2">
           <p className="text-[13px] leading-relaxed text-ink-soft">
-            Similar comments become <span className="font-semibold text-ink">feature requests</span>, sorted by area, with urgency: how many
-            customers ask.
+            A rule-based script groups comments by BMW&apos;s feedback categories into <span className="font-semibold text-ink">feature requests</span>,
+            sorted by area, with urgency: how many customers ask.
           </p>
           <ul className="mt-2.5 flex flex-wrap gap-1.5" aria-label="Categories">
             {CATEGORIES.map((c) => (
@@ -67,7 +67,7 @@ const STEPS: Step[] = [
           "Keep or reject each request. A reject always needs a written reason.",
           "Drag to set the priority.",
           "Star competitor features or trends onto a wishlist.",
-          "Every decision records who made it and when.",
+          "Every keep, reject and star records who made it and when.",
         ].map((t) => (
           <li key={t} className="flex gap-2">
             <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-human" />
@@ -79,17 +79,17 @@ const STEPS: Step[] = [
   },
   {
     title: "Build profiles",
-    body: "Two or three car profiles, such as “Fix the basics”, “Tech-forward” or “Comfort & craft”. Each follows your priority and BMW's principles, explains why it was chosen and exports as a PDF.",
+    body: "Three car profiles: “Fix the basics”, “Tech-forward” and “Comfort & craft”. Each follows your priority, shows its fit with BMW's principles, explains why it was chosen and saves as a PDF.",
     Icon: FileText,
   },
   {
     title: "Social test",
-    body: "Once the profiles exist, post them and see which one tracks better. A small-weight tie-breaker, never the decider.",
+    body: "Once the profiles exist, see which one might track better on social media. Simulated for now: nothing is posted. A small-weight tie-breaker, never the decider.",
     Icon: Megaphone,
   },
   {
     title: "Generations",
-    body: "Every build is saved. Reopen, compare or rebuild earlier generations from the dashboard.",
+    body: "Every build is saved. Reopen earlier generations from the dashboard, or edit and rebuild them. The next build reads your earlier decisions.",
     Icon: History,
   },
 ];
@@ -105,14 +105,14 @@ export function Process() {
               From a market to a car profile, in seven steps.
             </h2>
             <p className="mt-4 max-w-md leading-relaxed text-ink-soft">
-              The AI does the reading and sorting. The product manager makes the calls, and every call is written down.
+              Scripts and AI agents do the reading and sorting. The product manager makes the calls, and every keep and reject is written down.
             </p>
             <ul className="mt-6 flex flex-wrap gap-2 text-xs font-medium">
               <li className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-ink-soft ring-1 ring-line">
-                <span aria-hidden className="size-2 rounded-full bg-brand" /> AI step
+                <span aria-hidden className="size-2 rounded-full bg-brand" /> Automated step
               </li>
               <li className="inline-flex items-center gap-1.5 rounded-full bg-human-soft px-3 py-1 text-human ring-1 ring-human/20">
-                <span aria-hidden className="size-2 rounded-full bg-human" /> Human gate
+                <span aria-hidden className="size-2 rounded-full bg-human" /> Human step
               </li>
             </ul>
           </div>
@@ -139,7 +139,7 @@ export function Process() {
                     <h3 className="text-lg font-semibold text-ink">{title}</h3>
                     {human && (
                       <span className="rounded-full bg-human px-2 py-0.5 text-[11px] font-semibold tracking-wide text-white uppercase">
-                        Human gate
+                        Human step
                       </span>
                     )}
                   </div>

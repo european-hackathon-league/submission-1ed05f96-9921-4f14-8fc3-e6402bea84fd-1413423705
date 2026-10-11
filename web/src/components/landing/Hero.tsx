@@ -26,8 +26,8 @@ export function Hero() {
             Hear every market. <span className="text-brand">Decide with a reason.</span>
           </h1>
           <p className="mt-6 max-w-xl text-xl leading-relaxed text-ink-soft text-pretty">
-            Pick a market and a car. Dixi turns what customers ask for, plus competitors and trends, into feature
-            requests. The product manager decides, and every decision traces back to its source.
+            Pick a market and a car. Dixi turns what customers ask for into feature requests, and adds competitors and
+            trends with sources. The product manager decides, and every requirement traces back to its source.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <ButtonLink href="/dashboard">
