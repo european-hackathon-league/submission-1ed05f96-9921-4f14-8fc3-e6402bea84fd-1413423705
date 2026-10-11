@@ -62,7 +62,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 - **New top-level folders are ignored by default.** If a new folder must be committed, add a `!/<folder>/` line to `.gitignore` on purpose.
 - **Facts:** every external claim gets a checked source URL; mark inferences as *inferred*.
 - **Images:** only images with a clear licence; AI-generated images get a visible "AI-generated" label in the UI (EU AI Act Art. 50) and a `.json` sidecar. Never generate BMW logos or real people.
-- **Stack:** Next.js + TypeScript + Tailwind (web), FastAPI + Pydantic AI + Supabase/pgvector + OpenAI (backend). Details: `docs/tech-stack/README.md`.
+- **Stack:** Next.js + TypeScript + Tailwind (web), FastAPI + Pydantic AI + Supabase (Postgres; pgvector planned) + OpenAI + Tavily MCP (backend). Details: `docs/tech-stack/README.md`.
 - **Python:** `uv run --with <pkgs> python -I …`; don't install packages globally. **Node:** pnpm in `web/`.
 - **Output:** HTML deliverables are local files by default; publish claude.ai artifacts only when the user asks.
 - **Research:** prefer the exa MCP, tavily as a second opinion; keep query counts modest.

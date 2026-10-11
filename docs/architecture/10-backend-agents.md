@@ -136,8 +136,8 @@ These steps ran in the browser against the live backend:
 1. **Analysis:** loaded 30 principles. The assessor rated 20 requests in about 50 s. Sample output: "Range has strong demand (13 mentions). If delivered through substantially heavier batteries… it could strain G60-P1 and EU-08." Its honest gap: "The decision-memory tool returned no records."
 2. **Decisions:** the PM kept 3 requests and rejected *More storage and luggage space* with a reason, then built the profiles. Supabase now held the generation, 4 decisions and the assessment id.
 3. **Next analysis in a cleared browser:** everything came back from Supabase.
-   - The 3 kept requests carried "Kept before" and the bonus (range 78 → 92).
-   - The rejected one read "Rejected 11 Oct 2026 · Boot space is fixed by the platform… · Marco Rossi", and its score fell from 31 to 10 through decision memory.
+   - The 3 kept requests carried "Kept before" and the keep bonus (+5 points at default settings).
+   - The rejected one read "Rejected 11 Oct 2026 · Boot space is fixed by the platform… · Marco Rossi". With the default 60 % penalty at full strength, its score fell to 10 and it moved to last place.
 
 Offline tests: `cd backend && uv run pytest -q` (22 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
 
