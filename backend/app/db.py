@@ -39,6 +39,8 @@ class Store(Protocol):
     async def list_decisions(self, series: str, market: str | None) -> list[Decision]: ...
     async def save_generation(self, g: Generation) -> None: ...
     async def list_generations(self, series: str | None = None) -> list[Generation]: ...
+    async def get_generation(self, gid: str) -> Generation | None: ...
+    async def get_run(self, table: str, rid: str) -> dict[str, Any] | None: ...
     async def delete_generation(self, gid: str) -> None: ...
     async def save_run(self, table: str, row: dict[str, Any]) -> str: ...
     async def latest_run(self, table: str, series: str, market: str) -> dict[str, Any] | None: ...
@@ -105,6 +107,12 @@ class MemoryStore:
 
     async def delete_generation(self, gid):
         self.generations.pop(gid, None)
+
+    async def get_generation(self, gid):
+        return self.generations.get(gid)
+
+    async def get_run(self, table, rid):
+        return next((r for r in self.runs[table] if r["id"] == rid), None)
 
     async def save_run(self, table, row):
         rid = f"{table}-{len(self.runs[table]) + 1}"
@@ -204,6 +212,18 @@ class SupabaseStore:
         return [Generation(id=r["id"], series=r["series"], market=r["market"], createdAt=r["created_at"],
                            createdBy=r["created_by"], createdByRole=r["created_by_role"], payload=r["payload"])
                 for r in await self._get("generations", params)]
+
+    async def get_generation(self, gid):
+        rows = await self._get("generations", {"select": "*", "id": f"eq.{gid}"})
+        if not rows:
+            return None
+        r = rows[0]
+        return Generation(id=r["id"], series=r["series"], market=r["market"], createdAt=r["created_at"],
+                          createdBy=r["created_by"], createdByRole=r["created_by_role"], payload=r["payload"])
+
+    async def get_run(self, table, rid):
+        rows = await self._get(table, {"select": "*", "id": f"eq.{rid}"})
+        return rows[0] if rows else None
 
     async def delete_generation(self, gid):
         r = await self.http.delete("/generations", params={"id": f"eq.{gid}"})
