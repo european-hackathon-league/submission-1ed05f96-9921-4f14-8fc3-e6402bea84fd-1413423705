@@ -1,0 +1,9 @@
+now send me a table of ground truth of what we are saying the workflow does, against what it actually does.
+
+---
+
+how would you score this project? base on facts
+
+---
+
+[Image #3] is this aprt also working with ai right now?
