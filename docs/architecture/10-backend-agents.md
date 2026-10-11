@@ -165,7 +165,11 @@ sequenceDiagram
 
 ## 2c. Evidence page: where each requirement comes from
 
-`/dashboard/evidence?generation=<id>&profile=<id>&source=<SOURCE>`, opened with **Evidence** on a profile page. It shows one card per requirement, numbered in the PM's priority:
+Two ways in:
+- `/dashboard/evidence?generation=<id>&profile=<id>&source=<SOURCE>`: a saved profile, opened with **Evidence** on a profile page.
+- `/dashboard/evidence?market=<EU|US|CN>&series=<F70|G60|G70>`: draft mode, for the requests still being decided.
+
+**Open evidence** in any request's details (pipeline or profile page) jumps to that request's card (`#<request id>`). It shows one card per requirement, numbered in the PM's priority:
 - **Observed:** a one-paragraph summary with record ids, the study cell, backing signals and the principle fit.
 - **Evidence lines:** each with an exact reference.
 - **Source chips:** click one to filter the page; the filter is kept in the URL.
@@ -186,6 +190,8 @@ Built by `web/src/lib/pipeline/evidence.ts` (`buildEvidence`).
 - **Customer quotes:** shown only from the local data, folded away and marked "local data only, never uploaded".
 - **Where the references come from:** the data script (`scripts/build-pipeline-data.py`) records the cell of every study value and up to 12 record ids per request.
 - **Older generations:** builds made before ids were exported get them by request id, which is unchanged.
+
+**Two datasets, one store.** The local app (BMW data, request ids `G60-R01…`) and the public demo (example data, ids `G60-X01…`) share the Supabase project. Ids never overlap, so a decision can't attach to the other dataset's request. Research runs carry `dataset`, and `GET /research/signals/latest?dataset=` returns only runs of the same dataset.
 
 ## 3. Which data goes where
 
