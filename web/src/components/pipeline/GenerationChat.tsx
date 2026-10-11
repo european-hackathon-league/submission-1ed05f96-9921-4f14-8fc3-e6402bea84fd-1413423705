@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2, MessageCircleQuestion, Send } from "lucide-react";
-import { useState } from "react";
+import { Loader2, MessageCircleQuestion, Send, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { API_URL, api } from "@/lib/api";
 import { syncGeneration, type Session } from "@/lib/pipeline/sessions";
 
@@ -18,7 +18,7 @@ const SUGGESTIONS = [
   "What evidence is missing for this generation?",
 ];
 
-/** Ask about this generation. The backend agent (generation_analyst) looks facts up with tools — the generation,
+/** Floating chat on the profile page: a round button bottom right opens the panel. Ask about this generation. The backend agent (generation_analyst) looks facts up with tools — the generation,
  *  principles, principle assessment, research run, decision memory — and answers only from them. Under each answer:
  *  what it retrieved (recorded by the backend, not written by the model). */
 export function GenerationChat({ session, profileId }: { session: Session; profileId?: string }) {
@@ -26,6 +26,15 @@ export function GenerationChat({ session, profileId }: { session: Session; profi
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => end.current?.scrollIntoView({ block: "end" }), [turns, busy]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const ask = async (question: string) => {
     const q = question.trim();
@@ -50,7 +59,26 @@ export function GenerationChat({ session, profileId }: { session: Session; profi
   };
 
   return (
-    <section data-no-print aria-labelledby="chat-heading" className="rounded-card border border-line bg-surface p-4 shadow-card">
+    <div data-no-print>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="generation-chat"
+        onClick={() => setOpen((v) => !v)}
+        title={open ? "Close the chat" : "Ask about this generation"}
+        className="fixed bottom-6 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-float transition-transform hover:scale-105 motion-reduce:transition-none"
+      >
+        {open ? <X aria-hidden className="size-6" /> : <MessageCircleQuestion aria-hidden className="size-6" />}
+        <span className="sr-only">{open ? "Close the chat" : "Ask about this generation"}</span>
+      </button>
+
+      {open && (
+    <section
+      id="generation-chat"
+      role="dialog"
+      aria-labelledby="chat-heading"
+      className="fixed bottom-24 right-4 z-40 flex max-h-[min(70vh,640px)] w-[min(420px,calc(100vw-2rem))] flex-col rounded-card border border-line bg-surface p-4 shadow-float sm:right-6"
+    >
       <h2 id="chat-heading" className="flex items-center gap-2 text-sm font-semibold text-ink">
         <MessageCircleQuestion aria-hidden className="size-4 text-brand" /> Ask about this generation
       </h2>
@@ -63,6 +91,7 @@ export function GenerationChat({ session, profileId }: { session: Session; profi
         <p className="mt-3 text-sm text-muted">The chat needs the Dixi backend (set NEXT_PUBLIC_API_URL).</p>
       ) : (
         <>
+          <div className="-mx-1 mt-1 min-h-0 flex-1 overflow-y-auto px-1">
           {turns.length > 0 && (
             <ol className="mt-3 flex flex-col gap-3">
               {turns.map((t, i) => (
@@ -82,11 +111,14 @@ export function GenerationChat({ session, profileId }: { session: Session; profi
               ))}
             </div>
           )}
+          {busy && <p className="mt-2 flex items-center gap-1.5 text-xs text-muted"><Loader2 aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" /> Looking up facts…</p>}
           {error && (
             <p role="alert" className="mt-2 text-xs text-bad">
               {error}
             </p>
           )}
+          <div ref={end} />
+          </div>
           <form
             className="mt-3 flex items-center gap-2"
             onSubmit={(e) => {
@@ -99,6 +131,7 @@ export function GenerationChat({ session, profileId }: { session: Session; profi
             </label>
             <input
               id="chat-input"
+              autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="e.g. Why was the rear fridge rejected?"
@@ -117,5 +150,7 @@ export function GenerationChat({ session, profileId }: { session: Session; profi
         </>
       )}
     </section>
+      )}
+    </div>
   );
 }
