@@ -1,0 +1,5 @@
+can you please make sure add a simple chat base that retrieve information, of the facts etc, so in the profile page product manager can ask about anything related to this generation. keep it simple chat. that can retrieve facts. that's ans answer some questions, amke sure to add it in the architecture.
+
+---
+
+the chat, let's put it over the page, like flotating only in profile page. so it's on the right buttn, you click and open a chat.
