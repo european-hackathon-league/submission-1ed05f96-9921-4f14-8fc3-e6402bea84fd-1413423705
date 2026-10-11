@@ -45,7 +45,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 | Path | In git | What |
 |---|---|---|
 | `web/` | ✅ | **The Dixi app**: Next.js 16 (App Router), light mode. `/` landing (globe hero with market highlights and popping comments, process, product, contact), `/dashboard` (globe market picker), `/dashboard/[market]`. **Read `web/AGENTS.md`**: Next 16 has breaking changes; check `web/node_modules/next/dist/docs/` before using an API. Shared globe: `web/src/components/globe/MarketGlobe.tsx`. Data modules: `web/src/lib/markets.ts`, `web/src/lib/dashboard-data.ts` (example data, no real BMW data) |
-| `backend/` | ✅ | Planned API + agents (FastAPI, Pydantic AI, Supabase). See its README |
+| `backend/` | ✅ | API + agents: FastAPI, Pydantic AI + Harness sub-agents, Tavily remote MCP as web search, deployed on FastAPI Cloud (Supabase planned). `uv run pytest -q`, `uv run fastapi dev`. See its README |
 | `docs/` | ✅ | `docs/tech-stack/` (technology choices, versions, alternatives, sources), `docs/requirements.md` (developer setup: tools, accounts, Supabase CLI, Vercel, Entire) and architecture/design only: `docs/architecture/*.md` (Mermaid diagrams inside Markdown) + `docs/README.md` |
 | `branding/` | ✅ | Dixi brand: logos (light/dark/mark), `tokens.css` (mirrors `web/src/app/globals.css`), `brand-sheet.html`, guide |
 | `scripts/` | ✅ | `generate-image.mjs`: OpenAI image generation; key from `.env`; each image gets an AI-generated `.json` sidecar |
