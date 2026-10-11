@@ -1,6 +1,6 @@
 # Web app
 
-The current Next.js app: routes, components (incl. the requirement pipeline), shared globe, data modules, planned backend.
+The current Next.js app: routes, components (incl. the requirement pipeline), shared globe, data modules and the backend it calls (research agents, see [`10-backend-agents.md`](10-backend-agents.md)).
 
 ```mermaid
 flowchart TB
@@ -43,7 +43,7 @@ flowchart TB
     SP["SeriesPicker<br/>photo cards"]:::comp
     PL["Pipeline (client)<br/>analysis → decisions → build → dashboard"]:::comp
     RC["RequestCard · RequestDetails · RejectDialog<br/>drag priority · keep / reject + reason"]:::comp
-    SG["SignalsPanel<br/>competitors &amp; trends · wishlist"]:::comp
+    SG["SignalsPanel<br/>competitors &amp; trends · wishlist<br/>Run research agent · gaps"]:::comp
     GV["GenerationView · Generations list<br/>sessions.ts (localStorage)"]:::comp
     PR["Profiles · ProfileDetail (catalogue)<br/>PDF via print"]:::comp
     AN["Analytics<br/>simulated social test · chart"]:::comp
@@ -53,12 +53,14 @@ flowchart TB
     MK["markets.ts<br/>markets · countries · comments"]:::data
     DD["dashboard-data.ts<br/>market URL params"]:::data
     PD["pipeline/load.ts<br/>data-local/pipeline.json (BMW, git-ignored)<br/>or example.ts"]:::data
-    MS["pipeline/market-signals.ts<br/>research agent output, sourced"]:::data
+    MS["pipeline/market-signals.ts<br/>saved research (10 Oct), sourced"]:::data
+    RS["pipeline/research.ts<br/>live run per market + series<br/>localStorage"]:::data
     PF["pipeline/profiles.ts · analytics.ts<br/>urgency · priority · profiles · scores"]:::data
     CI["car-images.ts<br/>CC BY-SA photos"]:::data
   end
 
-  API["backend/ (planned)<br/>FastAPI + Pydantic AI · Supabase"]:::future
+  API["backend/ · FastAPI<br/>POST /research/signals<br/>lead + scout sub-agents · Tavily MCP"]:::comp
+  DB["Supabase (planned)<br/>runs · decisions · generations"]:::future
 
   R1 --> NAV & HERO & PROC & PROD & FOOT
   HERO --> MG
@@ -71,7 +73,10 @@ flowchart TB
   GV --> PR & AN & SB
   R2 --> GV
   SP --> CI & PD
-  PL --> PD & MS & PF
+  PL --> PD & MS & RS & PF
+  SG -- "Run research agent" --> RS
+  RS -- "NEXT_PUBLIC_API_URL" --> API
+  API -. "later" .-> DB
   MG --> GC --> W
   GC --> MK
   MP --> MK

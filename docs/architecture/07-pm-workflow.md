@@ -17,7 +17,7 @@ flowchart TD
   subgraph analyse ["AI analysis"]
     direction TB
     l2in["L2 · Customer feedback<br/>likes · dislikes · wishes"]
-    research["L2 · Research agent<br/>competitor features people like<br/>+ market trends, with sources"]
+    research["L2 · Research agent<br/>competitor features people like<br/>+ market trends, with sources<br/>saved research, or a live run the PM starts<br/>(backend: lead + 2 scouts on Tavily, gaps listed)"]
     cluster["Compress + cluster<br/>into feature requests"]
     cat["Categorise<br/>Exterior · Interior · Digital · Powertrain"]
     urgency["Urgency<br/>how many customers ask for it"]
