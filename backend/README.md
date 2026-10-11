@@ -83,6 +83,7 @@ backend/
 │   ├── agents/tavily.py     Tavily MCP toolset (filtered, URL recording, soft budget)
 │   └── models/              signals.py · assess.py · core.py (data contracts)
 ├── scripts/seed_principles.py  L1 principles → Supabase
+├── scripts/monthly_refresh.py  monthly job: label comments (Decisions API), counts, research, assess, report
 ├── tests/                   offline: fake models, fake search, in-memory store; never loads .env files
 └── pyproject.toml           uv; [tool.fastapi] entrypoint = app.main:app
 ```
@@ -91,7 +92,7 @@ backend/
 ```bash
 cd backend
 uv sync
-uv run pytest -q                 # offline tests (24)
+uv run pytest -q                 # offline tests (31)
 uv run fastapi dev               # http://127.0.0.1:8000/docs
 curl -X POST localhost:8000/research/signals -H 'content-type: application/json' \
   -d '{"series":"G60","market":"EU","maxSignals":6,"featureRequests":["Simpler iDrive menus and touchscreen"]}'
@@ -120,7 +121,11 @@ Check after deploy: `GET /health` must say `"store": "supabase"`, otherwise data
 - **Research agent:** only when the PM clicks **Run research agent**. Otherwise the web app shows the last stored run or the saved research.
 - **BMW data:** prepared beforehand by `scripts/build-pipeline-data.py`, rule-based and run by hand.
 
-**Planned:** a monthly cron job, for example `POST /jobs/refresh` triggered by a GitHub Actions `schedule:` cron or another scheduler. It would refresh feedback and run research for every series × market (≤ ~110 Tavily credits a month), re-assess principles, and store what changed for the PM to review. See `../docs/architecture/10-backend-agents.md` §0.
+**Monthly refresh job:** `scripts/monthly_refresh.py` (logic in `app/jobs/refresh.py`; schedule in `../.github/workflows/monthly-refresh.yml`, off by default).
+- **Labelling:** each comment is labelled with the OpenAI Decisions API (`choice` request, category and type with a confidence; `score` severity). Low-confidence answers go to a review queue.
+- **Then:** it counts demand per market, compares with last month and finds resurfaced rejects. Optional flags `--research` and `--assess` re-run the agents, and `--store` writes `refresh_runs` and `feedback_labels` (no comment text).
+- **Safe defaults:** the default is a dry run with the taxonomy rules, sending nothing; the Decisions labeler needs `--send`. Example commands are in the script header.
+- **Details:** `../docs/architecture/10-backend-agents.md` §0.
 
 ## Decision memory
 Every build is stored as a generation. `build_memory` (Python) and `buildMemory` (web) take the latest keep or reject per request from earlier generations of the same series (and market, unless the team set memory scope to "all"). A past reject lowers the score with a half-life, and lifts once demand has grown past the team's resurface threshold. A past keep adds a small bonus. The principle assessor reads the same memory through its tool. Matching is by series and request title today; pgvector similarity for reworded requests is planned.

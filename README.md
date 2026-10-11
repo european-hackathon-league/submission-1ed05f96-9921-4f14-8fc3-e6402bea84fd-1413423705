@@ -82,7 +82,7 @@ After the PM picks a market and a car, **the principle assessor runs live**. The
 - **BMW data:** prepared by the data script, rule-based, run by hand when new data arrives.
 - **Competitors and trends:** the last stored run of the research agent, or the saved research. The agent itself runs when the PM clicks **Run research agent**.
 
-**Planned (not built):** a monthly cron job that refreshes BMW feedback and trends and competitors for every series and market, re-runs the principle assessor, and reports what changed for the PM to review. Details: [`docs/architecture/10-backend-agents.md` §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first).
+**Monthly refresh job (built, scheduled run off):** `backend/scripts/monthly_refresh.py` labels each customer comment with the **OpenAI Decisions API** (request, category and type with a confidence, plus severity), counts demand per market, compares with last month, re-runs research and the principle assessor, and stores a report for the PM. It only sends comments to OpenAI with `--send`, because BMW has to agree first. Details: [`docs/architecture/10-backend-agents.md` §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first).
 
 ## What works today, and where
 
@@ -98,7 +98,7 @@ After the PM picks a market and a car, **the principle assessor runs live**. The
 | 3 car profiles, L1 = principle fit + PM priority, tensions listed, PDF via print | ✅ | [`profiles.ts`](web/src/lib/pipeline/profiles.ts), [`Profiles.tsx`](web/src/components/pipeline/Profiles.tsx) |
 | Ask questions about a generation on the profile page; answers only from retrieved facts, with what was looked up | ✅ generation chat | [`backend/app/agents/chat.py`](backend/app/agents/chat.py), [`GenerationChat.tsx`](web/src/components/pipeline/GenerationChat.tsx), `POST /chat/generation` |
 | L3 social test | 🟡 simulated, labelled in the UI | [`analytics.ts`](web/src/lib/pipeline/analytics.ts) |
-| Monthly refresh of BMW feedback + trends/competitors (cron) | ⚪ planned; today the data script runs by hand and research runs on request | [doc 10 §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first) |
+| Monthly refresh: label comments (OpenAI Decisions API), count demand, research + assess, report (cron) | ✅ job + tests (live Decisions run on fictional comments: request 12/12); 🟡 schedule off until BMW agrees | [doc 10 §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first) |
 | Gates G1–G4, engineering/BOM check, Codebeamer export, postpone, side-by-side generation compare | ⚪ target design only | [`docs/architecture/05-hitl-map.md`](docs/architecture/05-hitl-map.md) |
 
 **Honest by design.** Each agent returns what it could not find (`gaps`), and the principle assessor lists conflicts instead of averaging them away. Markets without comments fall back to all markets with a lower-confidence note. Every step of the analysis screen says where its data comes from.

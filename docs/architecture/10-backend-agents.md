@@ -25,16 +25,43 @@ When a PM picks a market and a car, **only one AI step runs live: the principle 
 
 The analysis screen states this per step, e.g. "grouped by BMW's feedback taxonomy (data script)" and "Competitors & trends: saved research … Run the research agent for a live search".
 
-### Planned: a monthly refresh job (not built)
+### The monthly refresh job (built; scheduled run off until BMW agrees)
 
-In production, BMW feedback and the market signals should not depend on someone running a script or clicking a button. Plan: a **scheduled job (cron), at least once a month**, per series and market:
+`backend/scripts/monthly_refresh.py` (core logic in `backend/app/jobs/refresh.py`); schedule in `.github/workflows/monthly-refresh.yml` (cron `0 3 1 * *`, runs only when the repository variable `DIXI_REFRESH_ENABLED` is `true`).
 
-1. **Feedback refresh**: load the latest BMW feedback, studies and sales export, rebuild the feature requests and mention counts (today's `build-pipeline-data.py` logic, moved into the backend), and store the result with its date. Mention counts at each refresh also make demand growth visible to the resurfacing rule.
-2. **Trends and competitors refresh**: run the research agent for every series × market (3 × 3 = 9 runs, ≤ ~110 Tavily credits a month at basic depth) and store each run in `research_runs`.
-3. **Re-assessment**: run the principle assessor on the refreshed requests, so principle fit reflects the new backing.
-4. **Report what changed**: new or grown requests, new signals, requests that resurfaced since a reject, and the gaps of each run, for the PM to review. The job proposes; it never decides.
+```mermaid
+flowchart LR
+  classDef ai fill:#e8f0fc,stroke:#1c69d4,color:#121722
+  classDef store fill:#0f3d75,stroke:#0f3d75,color:#ffffff
+  classDef human fill:#fdecea,stroke:#e22718,color:#121722
+  IN[("This month's comments<br/>BMW export")] --> LAB
+  LAB["Label each comment<br/>OpenAI Decisions API (gpt-6-luna)<br/>request · category · type: choice + confidence<br/>severity: score"]:::ai
+  LAB --> AGG["Count per request × market<br/>compare with last month<br/>resurfaced rejects"]
+  AGG --> RES["Research agent<br/>every series × market"]:::ai
+  AGG --> ASS["Principle assessor<br/>on the new counts"]:::ai
+  RES & ASS --> REP[("refresh_runs (report)<br/>feedback_labels (labels only, no text)")]:::store
+  REP --> PM{{"PM reviews<br/>review queue · new · grown · resurfaced"}}:::human
+```
 
-Where it could run: a GitHub Actions workflow with a monthly `schedule: cron` trigger (https://docs.github.com/en/actions/reference/events-that-trigger-workflows#schedule), or any external scheduler, calling a protected backend endpoint (e.g. `POST /jobs/refresh`), with Supabase holding the results. The PM would still be able to start the research agent by hand between refreshes.
+| Step | What it does | Flag |
+|---|---|---|
+| Label | Decisions API, 4 typed questions per comment: `choice` request (the catalog's requests + "other"), `choice` category, `choice` type (want · difficult · defect · praise), `score` severity (cosmetic … safety). Low confidence (< 0.6), "other" or a refusal → **review queue**. Dry-run alternative: today's taxonomy rules | `--labeler decisions --send` / default `taxonomy` |
+| Aggregate | Mentions per request, per market, per type, mean severity; compare with the last stored run (new, grown ≥ 30 %, dropped); rejected requests whose demand grew past the resurface threshold | always |
+| Research · Assess | Research agent for every series × market; principle assessor on the new counts | `--research`, `--assess` |
+| Store | `refresh_runs` (report) + `feedback_labels` (ids and labels, never the comment text) in Supabase | `--store` |
+
+**Safety rails.** The Decisions labeler refuses to run without `--send`, the operator's confirmation that comment text may go to OpenAI. The default is a dry run: rules, no network, report printed.
+
+**Tested (11 Oct 2026):**
+- **Offline:** 7 tests with a fake Decisions client (`tests/test_refresh.py`).
+- **Live, Decisions API on 12 fictional comments** (`tests/fixtures/synthetic_feedback.json`, written for the test, not BMW data), in 4.2 s. Results against the expected labels:
+  - request 12/12, at confidence 0.80–0.98; the 2 comments that fit no request went to review;
+  - type 10/12 (two range complaints labelled "defect" instead of "want");
+  - category 8/10 (two menu complaints labelled "Interior" instead of "Digital").
+- **Dry run on the real BMW export** (rules, nothing sent): 4,454 comments, 3,630 mapped to a request, 824 in the review queue (clusters too small to become a request), about 15 s.
+- **Supabase storage:** checked with the synthetic run, then deleted.
+
+**Still open:** BMW's agreement before real comments go to OpenAI; a monthly export from BMW (the workflow expects a signed URL to the month's comments); a review screen for the queue in the web app.
 
 ## 1. One analysis, step by step
 
@@ -198,10 +225,10 @@ These steps ran in the browser against the live backend:
    - The 3 kept requests carried "Kept before" and the keep bonus (+5 points at default settings).
    - The rejected one read "Rejected 11 Oct 2026 · Boot space is fixed by the platform… · Marco Rossi". With the default 60 % penalty at full strength, its score fell to 10 and it moved to last place.
 
-Offline tests: `cd backend && uv run pytest -q` (24 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
+Offline tests: `cd backend && uv run pytest -q` (31 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
 
 ## 6. Next steps
-0. **Monthly refresh job** (cron) for BMW feedback and for trends and competitors, plus re-assessment: see §0.
+0. **Switch on the monthly refresh** once BMW agrees and an export exists; add a review screen for its queue (§0).
 1. **Deploy** the backend to FastAPI Cloud and set `NEXT_PUBLIC_API_URL` on Vercel ([backend README](../../backend/README.md#deploy-fastapi-cloud-public-beta)).
 2. **Principle edit UI** for owners (the API exists).
 3. **Requirement writer** with `get_decision_memory` and the assessor's principle ids (SMART drafts, G1 → draft in [05](05-hitl-map.md)).

@@ -46,6 +46,7 @@ _Owner: <name> · created <YYYY-MM-DD>_
 |---|---|---|
 | `web/` | ✅ | **The Dixi app**: Next.js 16 (App Router), light mode. `/` landing (globe hero with market highlights and popping comments, process, product, contact), `/dashboard` (globe market picker), `/dashboard/[market]`. **Read `web/AGENTS.md`**: Next 16 has breaking changes; check `web/node_modules/next/dist/docs/` before using an API. Shared globe: `web/src/components/globe/MarketGlobe.tsx`. Data modules: `web/src/lib/markets.ts`, `web/src/lib/dashboard-data.ts` (example data, no real BMW data) |
 | `backend/` | ✅ | API + agents: FastAPI, Pydantic AI (research agent with Harness sub-agents on Tavily MCP; principle assessor), store for principles, decisions, generations, agent runs and settings in Supabase. `uv run pytest -q`, `uv run fastapi dev`, `uv run python -I scripts/seed_principles.py`. See its README |
+| `.github/` | ✅ | `workflows/monthly-refresh.yml`: the monthly refresh job, off unless `DIXI_REFRESH_ENABLED` is true |
 | `supabase/` | ✅ | Database schema: `supabase/migrations/*.sql` (applied to the hosted project *Dixi*). `.temp/` stays local |
 | `docs/` | ✅ | `docs/tech-stack/` (technology choices, versions, alternatives, sources), `docs/requirements.md` (developer setup: tools, accounts, Supabase CLI, Vercel, Entire) and architecture/design only: `docs/architecture/*.md` (Mermaid diagrams inside Markdown) + `docs/README.md` |
 | `branding/` | ✅ | Dixi brand: logos (light/dark/mark), `tokens.css` (mirrors `web/src/app/globals.css`), `brand-sheet.html`, guide |
