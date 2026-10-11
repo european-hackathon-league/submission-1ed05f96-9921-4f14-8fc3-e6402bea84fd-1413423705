@@ -25,6 +25,7 @@ import { MARKET_SIGNALS } from "@/lib/pipeline/market-signals";
 import { useResearch } from "@/lib/pipeline/research";
 import { useAssessment, usePrinciples, type AssessInput } from "@/lib/pipeline/principles";
 import { logDecision, logUndo, pullDecisions } from "@/lib/pipeline/decision-log";
+import { draftEvidenceHref } from "@/lib/pipeline/evidence";
 import { CATEGORIES, type Category, type FeatureRequest, type MarketSignal, type SeriesData } from "@/lib/pipeline/types";
 import { generationHref, newSessionId, pullSessions, readSessions, saveSession, type Session } from "@/lib/pipeline/sessions";
 import { buildMemory, scoreRequest } from "@/lib/pipeline/scoring";
@@ -109,7 +110,7 @@ export function Pipeline({
   const [details, setDetails] = useState<FeatureRequest | null>(null);
 
   /* L2 market signals: the last live run of the research agent (backend) for this market + series, else the saved research. */
-  const research = useResearch(scope, cfg.id);
+  const research = useResearch(scope, cfg.id, origin);
   const signals = useMemo(
     () => signalsFor(research.result?.signals ?? MARKET_SIGNALS, cfg.id, scope),
     [research.result, cfg.id, scope],
@@ -557,6 +558,7 @@ export function Pipeline({
         signals={details ? signalsByTitle.get(details.title) ?? [] : []}
         scored={details ? rows.find((r) => r.req.id === details.id)?.scored : undefined}
         fit={details ? assessment.fits.get(details.id) : undefined}
+        evidenceHref={details ? draftEvidenceHref(scope, cfg.id, details.id) : undefined}
         onClose={() => setDetails(null)}
       />
 
@@ -804,7 +806,10 @@ function Building({ count, onDone }: { count: number; onDone: () => void }) {
     <section aria-live="polite" className="mx-auto flex w-full max-w-xl flex-col items-center gap-3 rounded-card border border-line bg-surface p-8 text-center shadow-card">
       <Loader2 aria-hidden className="size-6 animate-spin text-brand motion-reduce:animate-none" />
       <p className="font-medium text-ink">Building profiles from your {count} kept requests</p>
-      <p className="text-sm text-muted">Combining them with BMW&apos;s principles, weighing customer, competitor and trend evidence, and leaving out everything you rejected.</p>
+      <p className="text-sm text-muted">
+        Rule-based, no AI call: three profile themes pick from your kept requests in your priority order, scored by principle fit (from the AI
+        principle assessor), customer coverage and market backing. Everything you rejected stays out.
+      </p>
     </section>
   );
 }

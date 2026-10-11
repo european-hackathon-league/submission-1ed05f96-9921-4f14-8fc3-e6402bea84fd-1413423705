@@ -56,6 +56,7 @@ class ResearchRequest(BaseModel):
         default=None, description="Only research these categories (None = all four)"
     )
     maxSignals: int = Field(default=8, ge=1, le=20)
+    dataset: str = Field(default="bmw", description="Which request data the run was made for: 'bmw' (local) or 'example' (public demo)")
 
 
 class ResearchResult(BaseModel):

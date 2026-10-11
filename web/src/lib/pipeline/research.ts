@@ -36,6 +36,8 @@ export interface ResearchRequest {
   featureRequests?: string[];
   categories?: Category[];
   maxSignals?: number;
+  /** "bmw" (local data) or "example" (public demo): keeps the two data sets' runs apart in the shared store. */
+  dataset?: "bmw" | "example";
 }
 
 const key = (market: string, series: string) => `dixi:research:${market}:${series}`;
@@ -112,7 +114,7 @@ export async function runResearch(req: ResearchRequest): Promise<ResearchResult>
 export type ResearchStatus = "idle" | "running" | "error";
 
 /** Live research for one market + series: the saved result, plus a run() that calls the backend and saves the result. */
-export function useResearch(scope: MarketScope, series: SeriesId) {
+export function useResearch(scope: MarketScope, series: SeriesId, dataset: "bmw" | "example" = "bmw") {
   const market = (RESEARCH_MARKETS as readonly string[]).includes(scope) ? (scope as ResearchMarket) : null;
   const k = key(scope, series);
   const result = useSyncExternalStore(
@@ -128,13 +130,13 @@ export function useResearch(scope: MarketScope, series: SeriesId) {
   useEffect(() => {
     if (!market || read(k) || optedOut(k)) return;
     let live = true;
-    pull<ResearchResult | null>(`/research/signals/latest?series=${series}&market=${market}`).then((r) => {
+    pull<ResearchResult | null>(`/research/signals/latest?series=${series}&market=${market}&dataset=${dataset}`).then((r) => {
       if (live && r && !read(k)) save(k, { ...r, signals: r.signals.map((s) => ({ ...s, id: stableId(s) })) });
     });
     return () => {
       live = false;
     };
-  }, [k, market, series]);
+  }, [k, market, series, dataset]);
 
   const run = useCallback(
     async (opts: Omit<ResearchRequest, "series" | "market"> = {}) => {
@@ -142,7 +144,7 @@ export function useResearch(scope: MarketScope, series: SeriesId) {
       setStatus("running");
       setError(null);
       try {
-        save(k, await runResearch({ series, market, maxSignals: 8, ...opts }));
+        save(k, await runResearch({ series, market, maxSignals: 8, dataset, ...opts }));
         setOptOut(k, false);
         setStatus("idle");
       } catch (e) {
@@ -150,7 +152,7 @@ export function useResearch(scope: MarketScope, series: SeriesId) {
         setStatus("error");
       }
     },
-    [k, market, series],
+    [k, market, series, dataset],
   );
   const clear = useCallback(() => {
     setOptOut(k, true);

@@ -32,6 +32,7 @@ async def research_by_id(rid: str, request: Request) -> ResearchResult:
 
 
 @router.get("/signals/latest", response_model=ResearchResult | None)
-async def latest_research(request: Request, series: SeriesId, market: Scope) -> ResearchResult | None:
-    row = await store_of(request).latest_run("research_runs", series, market)
+async def latest_research(request: Request, series: SeriesId, market: Scope, dataset: str | None = None) -> ResearchResult | None:
+    """The last run for this series + market (and dataset: runs for the example data never show up for BMW data)."""
+    row = await store_of(request).latest_run("research_runs", series, market, dataset)
     return ResearchResult.model_validate({**row["result"], "id": row["id"]}) if row else None
