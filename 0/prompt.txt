@@ -1,0 +1,60 @@
+<task-notification>
+<task-id>a733cd0fc465585d7</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/Volumes/PJ/DevCache/claude-tmp/claude-501/-Volumes-PJ-peresjav-hackathons-ehl-final-minuch-2026/014359f5-e686-4aa8-8891-31163a7924d1/tasks/a733cd0fc465585d7.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix landing copy claims" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I corrected every claim the code doesn't back up in the files you listed. `pnpm -s tsc --noEmit` and `pnpm -s lint` both pass in `web/`. Layout and behaviour are unchanged, with one exception: I removed the "Compare" chip, because comparing generations isn't built. Nothing is committed.
+
+**web/src/components/landing/Process.tsx**
+- 24: "AI analysis" → "Analysis"
+- 25: "Dixi reads everything it knows…" → "Dixi gathers what it knows about this car in this market, and an AI agent checks each request against BMW's principles."
+- 33: "Owned by managers." → "series, market and BMW Group principles." (managers can't edit principles in the app)
+- 40: "A research agent adds competitors and trends, with sources" → "When you run it, a research agent adds competitors and trends, with checked sources."
+- 45: "Similar comments become feature requests" → "A rule-based script groups comments by BMW's feedback categories into feature requests…"
+- 70: "Every decision records who made it and when." → "Every keep, reject and star records who made it and when." (priority moves aren't logged)
+- 82: "Two or three car profiles, such as…" → "Three car profiles: … Each follows your priority, shows its fit with BMW's principles, explains why it was chosen and saves as a PDF."
+- 87: "post them and see which one tracks better" → "see which one might track better on social media. Simulated for now: nothing is posted."
+- 92: "Reopen, compare or rebuild" → "Reopen earlier generations…, or edit and rebuild them. The next build reads your earlier decisions."
+- 108: "The AI does the reading and sorting… every call is written down" → "Scripts and AI agents do the reading and sorting… every keep and reject is written down."
+- 112, 115, 142: "AI step" / "Human gate" labels → "Automated step" / "Human step" (gates G1–G4 aren't built)
+
+**web/src/components/landing/Product.tsx**
+- 13: "Every keep, reject and priority change records who, when and why" → "Every keep, reject and wishlist star records who made it and when… Your priority order is saved."
+- 18: research agent → "On request, a research agent searches the web… Every source link is checked, and what it could not find is listed."
+- 23: "Reopen, compare or rebuild it, and export…" → "Reopen it, edit and rebuild it, and save any profile as a catalogue-style PDF."
+- 48–49: "two or three profiles… why the agent chose them" → "three profiles… why each was chosen, how it fits BMW's principles…" (profiles come from fixed rules, not an agent)
+- 66: "Gaps and conflicts are shown, never averaged away." → "The principle check lists gaps and conflicts, never averages them away."
+
+**web/src/components/landing/ProductMock.tsx**
+- 4, 150: removed the "Compare" chip and its unused icon import. Reopen and Rebuild stay.
+
+**web/src/components/landing/LayerWeights.tsx**
+- 1: comment "illustrative default weight shares per model" → "profile weight shares per series"
+- 8: "owned by managers" → "series, market and BMW Group principles"
+- 22: "How the finished profiles do when posted… tuned per model" → "How the finished profiles might do on social media. Simulated for now… fixed per series."
+- 43: "weighed per model" → "weighed per series"
+- 87: "Illustrative default shares. Managers can tune them per model." → "Shares used to score profiles, fixed per series. Dashboard settings tune the request score, the same for all series."
+
+**web/src/components/landing/Hero.tsx**
+- 29–30: "turns what customers ask for, plus competitors and trends, into feature requests… every decision traces back" → "turns what customers ask for into feature requests, and adds competitors and trends with sources… every requirement traces back to its source."
+
+**web/src/components/dashboard/MarketPicker.tsx**
+- 22: "Requirements, evidence and gaps are shown for that market." → "Pick a market on the globe or below, then a series. A market without comments falls back to all markets, with a lower-confidence note."
+
+**web/src/components/site/ContactForm.tsx**
+- The form never sent anything. The success text "Thanks, we'll get back to you." → "This form is a demo and nothing was sent. Please email team@dixi.dev" (now a mailto link). "Send another message" → "Back to the form", and the button "Send message" → "Send (demo)". The code comment now matches.
+
+**web/README.md**
+- Routes rewritten to match the app: `/dashboard` (generations list + New analysis), `/dashboard/new`, `/dashboard/[market]`, `/dashboard/[market]/[series]`, `/dashboard/generations#&lt;id&gt;`, `/dashboard/settings` with `/api/scoring-advice`.
+- New short section on where the data comes from: the deterministic script `scripts/build-pipeline-data.py` (no LLM clustering), the two backend agents, Supabase or localStorage storage, and the simulated L3.
+- Structure updated to include `components/pipeline/`, `lib/pipeline/` and `api.ts`.
+
+Two claims I checked and left as they are:
+- Saving a profile as a PDF is real: it opens the browser's print dialog.
+- Exactly three profiles are always built (`ARCHETYPES` in `src/lib/pipeline/profiles.ts`), so "three" replaces "two or three".
+
+One thing to confirm: `team@dixi.dev` is now a mailto link, so make sure that address actually receives mail.</result>
+<usage><subagent_tokens>88056</subagent_tokens><tool_uses>14</tool_uses><duration_ms>122435</duration_ms></usage>
+</task-notification>
