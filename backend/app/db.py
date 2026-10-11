@@ -47,7 +47,7 @@ class Store(Protocol):
     async def get_run(self, table: str, rid: str) -> dict[str, Any] | None: ...
     async def delete_generation(self, gid: str) -> None: ...
     async def save_run(self, table: str, row: dict[str, Any]) -> str: ...
-    async def latest_run(self, table: str, series: str, market: str) -> dict[str, Any] | None: ...
+    async def latest_run(self, table: str, series: str, market: str, dataset: str | None = None) -> dict[str, Any] | None: ...
     async def save_refresh(self, row: dict[str, Any], labels: list[dict[str, Any]]) -> str: ...
     async def latest_refresh(self) -> dict[str, Any] | None: ...
     async def get_settings(self) -> SettingsState: ...
@@ -126,8 +126,9 @@ class MemoryStore:
         self.runs[table].append({"id": rid, "created_at": _now(), **row})
         return rid
 
-    async def latest_run(self, table, series, market):
-        rows = [r for r in self.runs[table] if r["series"] == series and r["market"] == market]
+    async def latest_run(self, table, series, market, dataset=None):
+        rows = [r for r in self.runs[table] if r["series"] == series and r["market"] == market
+                and (dataset is None or (r.get("request") or {}).get("dataset", "bmw") == dataset)]
         return rows[-1] if rows else None
 
     async def save_refresh(self, row, labels):
@@ -251,9 +252,11 @@ class SupabaseStore:
     async def save_run(self, table, row):
         return (await self._post(table, row))[0]["id"]
 
-    async def latest_run(self, table, series, market):
-        rows = await self._get(table, {"select": "*", "series": f"eq.{series}", "market": f"eq.{market}",
-                                       "order": "created_at.desc", "limit": "1"})
+    async def latest_run(self, table, series, market, dataset=None):
+        params = {"select": "*", "series": f"eq.{series}", "market": f"eq.{market}", "order": "created_at.desc", "limit": "1"}
+        if dataset:
+            params["request->>dataset"] = f"eq.{dataset}"
+        rows = await self._get(table, params)
         return rows[0] if rows else None
 
     async def save_refresh(self, row, labels):

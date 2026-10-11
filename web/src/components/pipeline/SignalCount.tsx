@@ -7,8 +7,8 @@ import { useResearch } from "@/lib/pipeline/research";
 import type { SeriesId } from "@/lib/pipeline/types";
 
 /** Signal count on a series card: the last live research run for this market + series, else the saved research. */
-export function SignalCount({ scope, series }: { scope: MarketScope; series: SeriesId }) {
-  const { result } = useResearch(scope, series);
+export function SignalCount({ scope, series, dataset }: { scope: MarketScope; series: SeriesId; dataset: "bmw" | "example" }) {
+  const { result } = useResearch(scope, series, dataset);
   const n = signalsFor(result?.signals ?? MARKET_SIGNALS, series, scope).length;
   return (
     <span title={result ? "From your last live research run" : "From the saved research"}>

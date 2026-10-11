@@ -7,9 +7,49 @@ import { API_URL, pull } from "@/lib/api";
 import { SOURCE_IDS, SOURCE_LABEL, buildEvidence, sourceChip, type SourceId } from "@/lib/pipeline/evidence";
 import { usePrinciples, useAssessment, type Assessment } from "@/lib/pipeline/principles";
 import { generationHref, pullSessions, readSessions, type Session } from "@/lib/pipeline/sessions";
-import type { SeriesData, SeriesId } from "@/lib/pipeline/types";
+import { pullDecisions } from "@/lib/pipeline/decision-log";
+import { MARKET_SIGNALS } from "@/lib/pipeline/market-signals";
+import { signalsFor, type Decisions, type Profile } from "@/lib/pipeline/profiles";
+import { SERIES } from "@/lib/pipeline/series";
+import { marketById } from "@/lib/markets";
+import type { MarketScope } from "@/lib/dashboard-data";
+import type { FeatureRequest, MarketSignal, SeriesData, SeriesId } from "@/lib/pipeline/types";
 
-type Context = Record<string, Pick<SeriesData, "studies" | "sales"> & { recordIds: Record<string, string[]> }>;
+type Context = Record<string, Pick<SeriesData, "studies" | "sales"> & { recordIds: Record<string, string[]>; requests: FeatureRequest[] }>;
+
+const SCOPES = ["EU", "US", "CN", "JP", "ALL"];
+
+function readLocal<T>(key: string): T | null {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "null") as T | null;
+  } catch {
+    return null;
+  }
+}
+
+/** Draft mode: the requests of a market + series that are still being decided, shown like a one-profile generation. */
+async function draftSession(scope: MarketScope, series: SeriesId, ctx: Context): Promise<Session> {
+  const cfg = SERIES.find((s) => s.id === series)!;
+  const scoped = (r: FeatureRequest) => (scope === "ALL" ? r.mentions : (r.byMarket[scope as keyof typeof r.byMarket] ?? 0));
+  const all = ctx[series].requests;
+  const inMarket = all.filter((r) => scoped(r) > 0);
+  const base = inMarket.length ? inMarket : all;
+  const order = readLocal<string[]>(`dixi:priority:${scope}:${series}`) ?? [];
+  const sorted = [...base].sort((a, b) => {
+    const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
+    return scoped(b) - scoped(a);
+  });
+  const requests = sorted.map((r, i) => ({ ...r, scoped: inMarket.length ? scoped(r) : r.mentions, priority: i + 1 }));
+  const live = readLocal<{ signals: MarketSignal[] }>(`dixi:research:${scope}:${series}`);
+  const backing = signalsFor(live?.signals ?? MARKET_SIGNALS, series, scope);
+  const decisions = (await pullDecisions(series, scope)) ?? readLocal<Decisions>(`dixi:decisions:${scope}:${series}`) ?? {};
+  const profile = { id: "draft", name: "All requests (being decided)", tagline: "", requests, wishes: [], backing, why: [], score: { l1: 0, l2: 0, l3: null, total: 0 } } as Profile;
+  return {
+    id: "draft", createdAt: new Date().toISOString(), scope, scopeLabel: scope === "ALL" ? "all markets" : marketById(scope).name,
+    series, seriesName: cfg.name, slug: cfg.slug, profiles: [profile], decisions, order: requests.map((r) => r.id), campaigns: null,
+  };
+}
 
 const ICON: Record<SourceId, typeof FileText> = {
   "BMW-FEEDBACK": Users,
@@ -31,13 +71,20 @@ export function EvidencePage({ context, origin }: { context: Context; origin: "b
   const [state, setState] = useState<{ gen: Session | null; profile: string | null; source: string | null } | null>(null);
   useEffect(() => {
     const { generation, profile, source } = params();
+    const q = new URLSearchParams(window.location.search);
+    const market = (q.get("market") ?? "").toUpperCase();
+    const series = (q.get("series") ?? "").toUpperCase();
+    if (!generation && SCOPES.includes(market) && context[series]) {
+      draftSession(market as MarketScope, series as SeriesId, context).then((gen) => setState({ gen, profile: "draft", source }));
+      return;
+    }
     const local = readSessions().find((g) => g.id === generation);
     if (local) {
       const t = setTimeout(() => setState({ gen: local, profile, source }), 0);
       return () => clearTimeout(t);
     }
     pullSessions().then((all) => setState({ gen: all.find((g) => g.id === generation) ?? null, profile, source }));
-  }, []);
+  }, [context]);
   if (!state) return <div className="h-72 animate-pulse rounded-[20px] bg-bg-soft" />;
   if (!state.gen)
     return (
@@ -70,17 +117,26 @@ function Evidence({
     (SOURCE_IDS as readonly string[]).includes((initialSource ?? "").replace(/-[FG]\d{2}$/, "")) ? ((initialSource ?? "").replace(/-[FG]\d{2}$/, "") as SourceId) : null,
   );
   const principles = usePrinciples(gen.scope, gen.series as SeriesId);
-  const cached = useAssessment(gen.scope, gen.series as SeriesId);
+  const cached = useAssessment(gen.scope, gen.series as SeriesId, origin);
   /* The assessment this generation was built with (by id); else the cached one for its market + series. */
   const [linked, setLinked] = useState<Assessment | null>(null);
   useEffect(() => {
-    if (!gen.assessmentId || !API_URL) return;
+    if (!API_URL) return;
     let live = true;
+    /* Draft (no linked run): the latest stored assessment for this market + series, if this browser has none cached. */
+    if (!gen.assessmentId) {
+      if (!cached.result)
+        pull<Assessment | null>(`/assess/principles/latest?series=${gen.series}&market=${gen.scope}&dataset=${origin}`).then((a) => live && a && setLinked(a));
+      return () => {
+        live = false;
+      };
+    }
     pull<Assessment>(`/assess/principles/run/${gen.assessmentId}`).then((a) => live && setLinked(a));
     return () => {
       live = false;
     };
-  }, [gen.assessmentId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gen.assessmentId, gen.series, gen.scope, origin]);
   /* With a linked run, wait for it rather than briefly showing a different (cached) assessment. */
   const assessment = gen.assessmentId && API_URL ? linked : (linked ?? cached.result);
   const fits = useMemo(() => new Map((assessment?.fits ?? []).map((f) => [f.requestId, f])), [assessment]);
@@ -95,21 +151,31 @@ function Evidence({
     [profile, data, gen.scope, gen.decisions, fits, principles],
   );
   const counts = Object.fromEntries(SOURCE_IDS.map((s) => [s, cards.filter((c) => c.sources.includes(s)).length]));
+  const draft = gen.id === "draft";
+
+  /* #<request id> in the URL: scroll to that requirement once the cards are there. */
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    return () => clearTimeout(t);
+  }, [cards.length]);
   const shown = source ? cards.filter((c) => c.sources.includes(source)) : cards;
 
   const setUrl = (p: string, s: SourceId | null) => {
-    const q = new URLSearchParams({ generation: gen.id, profile: p, ...(s ? { source: sourceChip(s, gen.series) } : {}) });
+    const base: Record<string, string> = draft ? { market: gen.scope, series: gen.series } : { generation: gen.id, profile: p };
+    const q = new URLSearchParams({ ...base, ...(s ? { source: sourceChip(s, gen.series) } : {}) });
     window.history.replaceState(null, "", `/dashboard/evidence?${q}`);
   };
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <Link href={generationHref(gen.id)} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-brand">
-          <ArrowLeft aria-hidden className="size-4" /> Back to generation {gen.id}
+        <Link href={draft ? `/dashboard/${gen.scope.toLowerCase()}/${gen.slug}` : generationHref(gen.id)} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-brand">
+          <ArrowLeft aria-hidden className="size-4" /> {draft ? `Back to the ${gen.seriesName} · ${gen.scopeLabel} pipeline` : `Back to generation ${gen.id}`}
         </Link>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">
-          Evidence · {gen.seriesName} · {gen.scopeLabel} · {gen.id}
+          Evidence · {gen.seriesName} · {gen.scopeLabel} · {draft ? "draft (not built yet)" : gen.id}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">Where the requirements come from</h1>
         <p className="max-w-2xl text-sm text-muted">
@@ -119,7 +185,7 @@ function Evidence({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      {!draft && <div className="flex flex-wrap items-center gap-2">
         {gen.profiles.map((p) => (
           <button
             key={p.id}
@@ -134,7 +200,7 @@ function Evidence({
             {p.name}
           </button>
         ))}
-      </div>
+      </div>}
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by source">
         <Chip active={source === null} onClick={() => (setSource(null), setUrl(profile.id, null))} label={`All · ${cards.length}`} />

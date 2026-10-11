@@ -5,7 +5,7 @@ import { MARKET_DOT } from "@/components/dashboard/marketStyle";
 import { CAR_IMAGES } from "@/lib/car-images";
 import type { MarketScope } from "@/lib/dashboard-data";
 import { marketById } from "@/lib/markets";
-import { seriesData } from "@/lib/pipeline/load";
+import { pipelineOrigin, seriesData } from "@/lib/pipeline/load";
 import { marketVolume } from "@/lib/pipeline/profiles";
 import { SERIES } from "@/lib/pipeline/series";
 import { SignalCount } from "./SignalCount";
@@ -77,7 +77,7 @@ export function SeriesPicker({ scope }: { scope: MarketScope }) {
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/15 backdrop-blur-md">
                       <Radar aria-hidden className="size-3.5 text-brand-sky" />
-                      <SignalCount scope={scope} series={s.id} />
+                      <SignalCount scope={scope} series={s.id} dataset={pipelineOrigin()} />
                     </span>
                   </div>
                   <span className="mt-auto inline-flex h-10 items-center justify-between rounded-full bg-white px-4 text-sm font-medium text-ink transition-colors group-hover:bg-brand group-hover:text-white">

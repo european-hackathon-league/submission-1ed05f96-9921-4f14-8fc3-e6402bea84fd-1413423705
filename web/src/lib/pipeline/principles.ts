@@ -132,7 +132,7 @@ const limit = (requests: AssessInput[]) => [...requests].sort((a, b) => b.mentio
 
 export type AssessStatus = "idle" | "running" | "error";
 
-export function useAssessment(scope: MarketScope, series: SeriesId) {
+export function useAssessment(scope: MarketScope, series: SeriesId, dataset: "bmw" | "example" = "bmw") {
   const k = key(scope, series);
   const result = useSyncExternalStore(subscribe, () => read(k), () => null);
   const [status, setStatus] = useState<AssessStatus>("idle");
@@ -148,7 +148,7 @@ export function useAssessment(scope: MarketScope, series: SeriesId) {
         const basis = basisOf(requests);
         const out = await api<Assessment>("/assess/principles", {
           method: "POST",
-          body: JSON.stringify({ series, market: scope, requests, basis }),
+          body: JSON.stringify({ series, market: scope, requests, basis, dataset }),
         });
         const a = { ...out, basis };
         save(k, a);
@@ -160,7 +160,7 @@ export function useAssessment(scope: MarketScope, series: SeriesId) {
         return null;
       }
     },
-    [k, scope, series],
+    [k, scope, series, dataset],
   );
 
   /** Use the cached assessment if it covers this request set; otherwise run the assessor (once per analysis). */
@@ -170,14 +170,14 @@ export function useAssessment(scope: MarketScope, series: SeriesId) {
       const cached = read(k);
       if (cached && cached.basis === basis) return cached;
       /* Another browser (or an earlier visit) may have assessed the same requests: reuse the stored run. */
-      const stored = await pull<Assessment | null>(`/assess/principles/latest?series=${series}&market=${scope}`);
+      const stored = await pull<Assessment | null>(`/assess/principles/latest?series=${series}&market=${scope}&dataset=${dataset}`);
       if (stored && stored.basis === basis) {
         save(k, stored);
         return stored;
       }
       return run(all);
     },
-    [k, run, scope, series],
+    [k, run, scope, series, dataset],
   );
 
   const fits = useMemo(() => new Map((result?.fits ?? []).map((f) => [f.requestId, f])), [result]);

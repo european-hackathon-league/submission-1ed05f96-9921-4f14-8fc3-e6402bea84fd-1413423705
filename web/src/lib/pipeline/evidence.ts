@@ -159,3 +159,6 @@ export function buildEvidence(args: {
 export const sourceChip = (s: SourceId, series: string) => (s === "BMW-FEEDBACK" ? `BMW-FEEDBACK-${series}` : s);
 export const evidenceHref = (generationId: string, profileId: string, requestId?: string) =>
   `/dashboard/evidence?generation=${encodeURIComponent(generationId)}&profile=${encodeURIComponent(profileId)}${requestId ? `#${encodeURIComponent(requestId)}` : ""}`;
+/** Draft evidence: the requests of a market + series that are still being decided (no generation yet). */
+export const draftEvidenceHref = (market: string, series: string, requestId?: string) =>
+  `/dashboard/evidence?market=${encodeURIComponent(market)}&series=${encodeURIComponent(series)}${requestId ? `#${encodeURIComponent(requestId)}` : ""}`;

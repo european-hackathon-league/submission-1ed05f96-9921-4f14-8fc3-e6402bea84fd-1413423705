@@ -40,7 +40,8 @@ function requestsFor(series: SeriesId, factor: number): FeatureRequest[] {
     const wants = Math.round(mentions * 0.5);
     const difficult = Math.round(mentions * 0.3);
     return {
-      id: `${series}-R${String(i + 1).padStart(2, "0")}`,
+      /* X = example: never the same id as a request built from BMW data (G60-R01 …), because decisions are matched by id. */
+      id: `${series}-X${String(i + 1).padStart(2, "0")}`,
       series,
       title,
       category,
