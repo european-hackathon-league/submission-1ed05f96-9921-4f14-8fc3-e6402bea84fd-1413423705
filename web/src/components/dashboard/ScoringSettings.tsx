@@ -104,7 +104,7 @@ export function ScoringSettingsForm() {
 
         <button
           type="button"
-          onClick={() => saveScoring(DEFAULT_SCORING)}
+          onClick={() => saveScoring(DEFAULT_SCORING, { source: "reset" })}
           className="inline-flex items-center gap-1.5 self-start rounded-full px-4 py-2 text-sm text-ink-soft ring-1 ring-line hover:bg-bg-soft"
         >
           <RotateCcw aria-hidden className="size-4" /> Reset to defaults

@@ -4,7 +4,7 @@ import { ArrowLeft, FolderClock, Globe2, Layers, ListChecks, Trophy } from "luci
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GenerationList } from "@/components/pipeline/Generations";
-import { deleteSession, readSessions, type Session } from "@/lib/pipeline/sessions";
+import { deleteSession, pullSessions, readSessions, type Session } from "@/lib/pipeline/sessions";
 import { MarketPicker } from "./MarketPicker";
 
 type Tab = "generations" | "new";
@@ -15,8 +15,14 @@ export function DashboardHome({ tab }: { tab: Tab }) {
   const [gens, setGens] = useState<Session[] | null>(null);
 
   useEffect(() => {
+    /* Local copy first, then every generation stored in Supabase (when the backend is configured). */
+    let live = true;
     const t = setTimeout(() => setGens(readSessions()), 0);
-    return () => clearTimeout(t);
+    pullSessions().then((all) => live && setGens(all));
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
   }, []);
 
   const list = gens ?? [];

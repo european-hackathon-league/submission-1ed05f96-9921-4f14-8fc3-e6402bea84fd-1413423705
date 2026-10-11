@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { SyncBadge } from "./SyncBadge";
 import { UserMenu } from "./UserMenu";
 
 /** App bar: logo, Dashboard, the one "New analysis" button, and who is deciding. */
@@ -18,6 +19,7 @@ export function TopBar() {
         <Link href="/dashboard/new" className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-sm font-medium text-white shadow-card hover:bg-brand-deep">
           <Plus aria-hidden className="size-4" /> New analysis
         </Link>
+        <SyncBadge />
         <Link href="/dashboard/settings" aria-label="Settings" title="Scoring settings" className="flex size-9 items-center justify-center rounded-full text-ink-soft ring-1 ring-line hover:bg-bg-soft hover:text-ink">
           <SlidersHorizontal aria-hidden className="size-4" />
         </Link>
