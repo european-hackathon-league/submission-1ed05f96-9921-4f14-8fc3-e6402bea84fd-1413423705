@@ -393,7 +393,7 @@ export function Pipeline({
           rows={rows.length}
           signals={signals.length}
           liveResearch={research.result !== null}
-          principles={principles?.length ?? null}
+          principles={principles === undefined ? undefined : (principles?.length ?? null)}
           volume={fallback ? marketVolume(data, "ALL") : volume}
           assess={assessment.available ? () => assessment.ensure(assessInputs) : null}
           onDone={finishAnalysis}
@@ -688,7 +688,8 @@ function Analysis({
   rows: number;
   signals: number;
   liveResearch: boolean;
-  principles: number | null;
+  /** undefined = still loading, null = unavailable. */
+  principles: number | null | undefined;
   volume: number;
   assess: (() => Promise<unknown>) | null;
   onDone: () => void;
@@ -701,11 +702,11 @@ function Analysis({
       steps: [
         {
           text:
-            principles !== null
+            typeof principles === "number"
               ? `Loaded ${principles} L1 principles for the ${cfg.name} in ${scopeLabel}: series fundamentals, market and Group principles (Supabase)`
-              : assess
+              : principles === undefined
                 ? `Loading L1 principles for the ${cfg.name} in ${scopeLabel} from Supabase`
-                : `Using the ${cfg.name}'s ${cfg.principles.length} series fundamentals (backend not connected: no market principles)`,
+                : `Using the ${cfg.name}'s ${cfg.principles.length} series fundamentals: market and Group principles unavailable (backend not connected or not answering)`,
         },
       ],
     },

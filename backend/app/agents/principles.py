@@ -119,7 +119,7 @@ async def run_assessment(agent: Agent[AssessDeps, AssessorOutput], store: Store,
     result = await agent.run(prompt_for(req, principles), deps=deps)
     checked = verify(result.output, req, ids)
     out = AssessResult(**checked.model_dump(), series=req.series, market=req.market, principleIds=sorted(ids),
-                       requestIds=sorted(r.id for r in req.requests), model=model_label, generatedAt=datetime.now(UTC).isoformat(timespec="seconds"))
+                       requestIds=sorted(r.id for r in req.requests), basis=req.basis, model=model_label, generatedAt=datetime.now(UTC).isoformat(timespec="seconds"))
     out.id = await store.save_run("principle_assessments", {
         "series": req.series, "market": req.market, "principle_ids": sorted(ids),
         "request": req.model_dump(mode="json"), "result": out.model_dump(mode="json", exclude={"id"}), "model": model_label})

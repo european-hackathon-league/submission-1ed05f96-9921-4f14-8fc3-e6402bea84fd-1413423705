@@ -13,7 +13,7 @@ export function PrinciplesPanel({
   assessment,
   onAssess,
 }: {
-  principles: Principle[] | null;
+  principles: Principle[] | null | undefined;
   assessment: ReturnType<typeof useAssessment>;
   onAssess: () => void;
 }) {
@@ -22,13 +22,17 @@ export function PrinciplesPanel({
   const a = assessment.result;
   const running = assessment.status === "running";
 
-  if (principles === null)
+  if (!principles)
     return (
       <section className="rounded-card border border-line bg-surface p-4 text-sm text-muted shadow-card">
         <h2 className="flex items-center gap-2 font-semibold text-ink">
           <Landmark aria-hidden className="size-4 text-l1" /> BMW principles (L1)
         </h2>
-        <p className="mt-2">Connect the backend (NEXT_PUBLIC_API_URL) to load market and Group principles from Supabase. The score uses the series focus meanwhile.</p>
+        <p className="mt-2">
+          {principles === undefined
+            ? "Loading principles from Supabase…"
+            : "Principles unavailable: the backend is not connected (NEXT_PUBLIC_API_URL) or not answering. The score uses the series focus as principle fit."}
+        </p>
       </section>
     );
 

@@ -67,9 +67,11 @@ export interface AssessInput {
 
 /* ---------- principles ---------- */
 
+/** undefined = loading · null = unavailable (no backend, or it did not answer) · list = loaded from Supabase. */
 export function usePrinciples(scope: MarketScope, series: SeriesId) {
-  const [principles, setPrinciples] = useState<Principle[] | null>(null);
+  const [principles, setPrinciples] = useState<Principle[] | null | undefined>(API_URL ? undefined : null);
   useEffect(() => {
+    if (!API_URL) return;
     let live = true;
     pull<Principle[]>(`/principles?market=${scope}&series=${series}`).then((p) => live && setPrinciples(p));
     return () => {
@@ -122,7 +124,11 @@ function subscribe(cb: () => void) {
   };
 }
 
-export const basisOf = (requests: { id: string }[]) => requests.map((r) => r.id).sort().join(",");
+/** The assessor's input in one string: request ids + their backing signals, so new research triggers a fresh assessment. */
+export const basisOf = (requests: AssessInput[]) =>
+  requests.map((r) => `${r.id}:${[...r.backing].sort().join("|")}`).sort().join(",");
+/** The backend accepts up to 40 requests per assessment (most-mentioned first). */
+const limit = (requests: AssessInput[]) => [...requests].sort((a, b) => b.mentions - a.mentions).slice(0, 40);
 
 export type AssessStatus = "idle" | "running" | "error";
 
@@ -133,16 +139,18 @@ export function useAssessment(scope: MarketScope, series: SeriesId) {
   const [error, setError] = useState<string | null>(null);
 
   const run = useCallback(
-    async (requests: AssessInput[]) => {
+    async (all: AssessInput[]) => {
+      const requests = limit(all);
       if (!API_URL || requests.length === 0) return null;
       setStatus("running");
       setError(null);
       try {
+        const basis = basisOf(requests);
         const out = await api<Assessment>("/assess/principles", {
           method: "POST",
-          body: JSON.stringify({ series, market: scope, requests: requests.slice(0, 40) }),
+          body: JSON.stringify({ series, market: scope, requests, basis }),
         });
-        const a = { ...out, basis: basisOf(requests) };
+        const a = { ...out, basis };
         save(k, a);
         setStatus("idle");
         return a;
@@ -157,18 +165,17 @@ export function useAssessment(scope: MarketScope, series: SeriesId) {
 
   /** Use the cached assessment if it covers this request set; otherwise run the assessor (once per analysis). */
   const ensure = useCallback(
-    async (requests: AssessInput[]) => {
-      const basis = basisOf(requests);
+    async (all: AssessInput[]) => {
+      const basis = basisOf(limit(all));
       const cached = read(k);
       if (cached && cached.basis === basis) return cached;
       /* Another browser (or an earlier visit) may have assessed the same requests: reuse the stored run. */
       const stored = await pull<Assessment | null>(`/assess/principles/latest?series=${series}&market=${scope}`);
-      if (stored && (stored.requestIds ?? []).slice().sort().join(",") === basis) {
-        const a = { ...stored, basis };
-        save(k, a);
-        return a;
+      if (stored && stored.basis === basis) {
+        save(k, stored);
+        return stored;
       }
-      return run(requests);
+      return run(all);
     },
     [k, run, scope, series],
   );

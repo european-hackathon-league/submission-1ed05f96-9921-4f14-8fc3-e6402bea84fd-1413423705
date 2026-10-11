@@ -7,8 +7,9 @@
  *   score  = base × (1 − penalty) + bonus
  *
  * Pure functions (usable on server and client). The settings store lives in scoring-store.ts (client only).
- * Settings are tuned by the team in /dashboard/settings and stored in this browser for now (Supabase later).
- * The backend agent will apply the same rules before it proposes requests (see docs/architecture/09-scoring-and-memory.md).
+ * Settings are tuned by the team in /dashboard/settings and stored in Supabase through the backend (local copy here).
+ * backend/app/scoring.py applies the same rules (tests pin both to the same numbers); the principle assessor reads the
+ * same memory. Principle fit comes from the assessor when there is one (see docs/architecture/09-scoring-and-memory.md).
  */
 import type { MarketScope } from "@/lib/dashboard-data";
 import type { Decision } from "./profiles";

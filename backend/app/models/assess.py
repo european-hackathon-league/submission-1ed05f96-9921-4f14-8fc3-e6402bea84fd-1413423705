@@ -16,6 +16,7 @@ class AssessRequest(BaseModel):
     series: SeriesId
     market: Scope
     requests: list[RequestInput] = Field(min_length=1, max_length=40)
+    basis: str | None = Field(default=None, description="Client key of this input (ids + backing); echoed so a stored run can be reused")
 
 
 class RequestFit(BaseModel):
@@ -40,6 +41,7 @@ class AssessResult(AssessorOutput):
     series: SeriesId
     market: Scope
     principleIds: list[str]
-    requestIds: list[str] = Field(default_factory=list, description="The request set that was assessed (reuse check)")
+    requestIds: list[str] = Field(default_factory=list, description="The request set that was assessed")
+    basis: str | None = None
     model: str
     generatedAt: str

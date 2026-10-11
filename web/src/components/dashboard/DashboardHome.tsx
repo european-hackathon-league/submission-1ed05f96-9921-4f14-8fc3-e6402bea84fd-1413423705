@@ -4,6 +4,7 @@ import { ArrowLeft, FolderClock, Globe2, Layers, ListChecks, Trophy } from "luci
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GenerationList } from "@/components/pipeline/Generations";
+import { API_URL } from "@/lib/api";
 import { deleteSession, pullSessions, readSessions, type Session } from "@/lib/pipeline/sessions";
 import { MarketPicker } from "./MarketPicker";
 
@@ -77,7 +78,7 @@ export function DashboardHome({ tab }: { tab: Tab }) {
                   setGens(readSessions());
                 }}
               />
-              <p className="text-xs text-muted">Saved in this browser. Each build of profiles is one generation: its decisions, priority, profiles and social test.</p>
+              <p className="text-xs text-muted">{API_URL ? "Saved in Supabase (with a copy in this browser)." : "Saved in this browser."} Each build of profiles is one generation: its decisions, priority, profiles and social test.</p>
             </>
           )}
         </>

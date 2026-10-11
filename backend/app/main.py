@@ -1,7 +1,8 @@
 """Dixi API. Run locally: `uv run fastapi dev` · deploy: `fastapi deploy` (FastAPI Cloud)."""
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agents.principles import build_assessor
@@ -9,7 +10,7 @@ from app.agents.research import build_research_agent, openai_models
 from app.agents.tavily import tavily_toolset
 from app.api import assess, research, store
 from app.config import get_settings
-from app.db import make_store
+from app.db import StoreError, make_store
 
 settings = get_settings()
 
@@ -41,6 +42,11 @@ app = FastAPI(title="Dixi API", version="0.2.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware, allow_origins=settings.cors_origin_list, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["*"]
 )
+@app.exception_handler(StoreError)
+async def store_error(_: Request, exc: StoreError) -> JSONResponse:
+    return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
 app.include_router(research.router)
 app.include_router(assess.router)
 app.include_router(store.router)

@@ -78,6 +78,23 @@ function save(k: string, r: ResearchResult | null) {
   window.dispatchEvent(new Event(EVENT));
 }
 
+/* "Use saved research": remembered per market + series, so the stored live run is not loaded again. */
+function optedOut(k: string): boolean {
+  try {
+    return localStorage.getItem(`${k}:saved`) === "1";
+  } catch {
+    return false;
+  }
+}
+function setOptOut(k: string, on: boolean) {
+  try {
+    if (on) localStorage.setItem(`${k}:saved`, "1");
+    else localStorage.removeItem(`${k}:saved`);
+  } catch {
+    /* storage blocked */
+  }
+}
+
 function subscribe(cb: () => void) {
   window.addEventListener(EVENT, cb);
   window.addEventListener("storage", cb);
@@ -106,9 +123,10 @@ export function useResearch(scope: MarketScope, series: SeriesId) {
   const [status, setStatus] = useState<ResearchStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  /* No run in this browser yet: load the last stored run for this market + series from the backend (research_runs). */
+  /* No run in this browser yet: load the last stored run for this market + series from the backend (research_runs),
+   * unless the PM chose "Use saved research" here. */
   useEffect(() => {
-    if (!market || read(k)) return;
+    if (!market || read(k) || optedOut(k)) return;
     let live = true;
     pull<ResearchResult | null>(`/research/signals/latest?series=${series}&market=${market}`).then((r) => {
       if (live && r && !read(k)) save(k, { ...r, signals: r.signals.map((s) => ({ ...s, id: stableId(s) })) });
@@ -125,6 +143,7 @@ export function useResearch(scope: MarketScope, series: SeriesId) {
       setError(null);
       try {
         save(k, await runResearch({ series, market, maxSignals: 8, ...opts }));
+        setOptOut(k, false);
         setStatus("idle");
       } catch (e) {
         setError(e instanceof Error ? e.message : "Research agent failed.");
@@ -133,7 +152,10 @@ export function useResearch(scope: MarketScope, series: SeriesId) {
     },
     [k, market, series],
   );
-  const clear = useCallback(() => save(k, null), [k]);
+  const clear = useCallback(() => {
+    setOptOut(k, true);
+    save(k, null);
+  }, [k]);
 
   /** Why a live run is not possible here, or null when it is. */
   const unavailable = !API_URL
