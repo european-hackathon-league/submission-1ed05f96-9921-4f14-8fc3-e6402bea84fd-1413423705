@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, Download, ExternalLink, Info, Star, Trophy } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, Download, ExternalLink, FileSearch, Info, Star, Trophy } from "lucide-react";
 import { useState } from "react";
 import type { CarImage } from "@/lib/car-images";
 import { draftTarget, type Decisions, type Profile } from "@/lib/pipeline/profiles";
@@ -11,6 +12,7 @@ import { CATEGORIES, type FeatureRequest, type MarketSignal } from "@/lib/pipeli
 import { PROFILE_COLOR } from "./Analytics";
 import { CATEGORY_ICON, SIGNAL_ICON } from "./icons";
 import { GenerationChat } from "./GenerationChat";
+import { evidenceHref } from "@/lib/pipeline/evidence";
 import { RequestDetails } from "./RequestCard";
 
 const layerParts = (score: Profile["score"], l3Weight: number) => {
@@ -187,6 +189,13 @@ export function ProfileDetail({
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-brand">
           <ArrowLeft aria-hidden className="size-4" /> All profiles
         </button>
+        <div className="flex items-center gap-2">
+        <Link
+          href={evidenceHref(session.id, profile.id)}
+          className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium text-ink ring-1 ring-line transition-colors hover:text-brand hover:ring-brand/40"
+        >
+          <FileSearch aria-hidden className="size-4" /> Evidence
+        </Link>
         <button
           type="button"
           onClick={() => window.print()}
@@ -195,6 +204,7 @@ export function ProfileDetail({
         >
           <Download aria-hidden className="size-4" /> Download PDF
         </button>
+        </div>
       </div>
 
       <RequestDetails
