@@ -22,6 +22,7 @@ import {
 } from "@/lib/pipeline/profiles";
 import type { SeriesConfig } from "@/lib/pipeline/series";
 import { MARKET_SIGNALS } from "@/lib/pipeline/market-signals";
+import { useResearch } from "@/lib/pipeline/research";
 import { CATEGORIES, type Category, type FeatureRequest, type MarketSignal, type SeriesData } from "@/lib/pipeline/types";
 import { generationHref, newSessionId, readSessions, saveSession, type Session } from "@/lib/pipeline/sessions";
 import { buildMemory, scoreRequest } from "@/lib/pipeline/scoring";
@@ -104,7 +105,12 @@ export function Pipeline({
   const [backedOnly, setBackedOnly] = useState(false);
   const [details, setDetails] = useState<FeatureRequest | null>(null);
 
-  const signals = useMemo(() => signalsFor(MARKET_SIGNALS, cfg.id, scope), [cfg.id, scope]);
+  /* L2 market signals: the last live run of the research agent (backend) for this market + series, else the saved research. */
+  const research = useResearch(scope, cfg.id);
+  const signals = useMemo(
+    () => signalsFor(research.result?.signals ?? MARKET_SIGNALS, cfg.id, scope),
+    [research.result, cfg.id, scope],
+  );
   const signalsByTitle = useMemo(() => {
     const m = new Map<string, MarketSignal[]>();
     signals.forEach((sg) => sg.relatesTo.forEach((t) => m.set(t, [...(m.get(t) ?? []), sg])));
@@ -374,6 +380,8 @@ export function Pipeline({
                 }}
                 onWish={(sg, on) => (on ? decide(sg, "wish") : undo(sg.id))}
                 scopeLabel={scopeLabel}
+                research={research}
+                onResearch={() => research.run({ featureRequests: rows.map((r) => r.req.title) })}
               />
               <h2 id="req-heading" className="mt-2 flex items-center gap-2 text-lg font-semibold tracking-tight text-ink">
                 Feature requests

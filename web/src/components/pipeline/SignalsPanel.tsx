@@ -1,13 +1,16 @@
 "use client";
 
-import { ExternalLink, Link2, Radar, Star } from "lucide-react";
+import { CircleHelp, ExternalLink, Link2, Loader2, Radar, RefreshCw, Star, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import type { Decisions } from "@/lib/pipeline/profiles";
+import type { useResearch } from "@/lib/pipeline/research";
 import type { MarketSignal } from "@/lib/pipeline/types";
 import { CategoryTile, SIGNAL_ICON } from "./icons";
 
 /** L2 market signals from the research agent: what people like in competitors, and market trends.
- *  Signals that match customer feedback are linked; any signal can go on the PM's wishlist. */
+ *  Signals that match customer feedback are linked; any signal can go on the PM's wishlist.
+ *  "Run research" calls the backend agents (lead researcher + scouts on Tavily); their result replaces the saved research
+ *  for this market + series. Gaps = what the agents looked for and could not back with a source. */
 export function SignalsPanel({
   signals,
   decisions,
@@ -15,6 +18,8 @@ export function SignalsPanel({
   onFocus,
   onWish,
   scopeLabel,
+  research,
+  onResearch,
 }: {
   signals: MarketSignal[];
   decisions: Decisions;
@@ -22,8 +27,14 @@ export function SignalsPanel({
   onFocus: (id: string | null) => void;
   onWish: (s: MarketSignal, on: boolean) => void;
   scopeLabel: string;
+  research: ReturnType<typeof useResearch>;
+  onResearch: () => void;
 }) {
   const [all, setAll] = useState(false);
+  const [showGaps, setShowGaps] = useState(false);
+  const live = research.result;
+  const running = research.status === "running";
+  const when = live ? new Date(live.generatedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null;
   const sorted = [...signals].sort((a, b) => b.relatesTo.length - a.relatesTo.length || (a.strength === "strong" ? -1 : 1));
   return (
     <section aria-labelledby="signals-heading" className="rounded-card border border-l3/40 bg-l3-soft/40 p-4">
@@ -39,8 +50,38 @@ export function SignalsPanel({
         </p>
       </div>
 
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted">
+        <span>
+          {live
+            ? `Live research · ${when} · ${live.searches} web searches · every source checked against the search results`
+            : "Saved research (10 Oct 2026) · public sources"}
+        </span>
+        <button
+          type="button"
+          onClick={onResearch}
+          disabled={running || research.unavailable !== null}
+          title={research.unavailable ?? "Lead researcher sends two scout agents (competitors, trends) to search the web. Takes about a minute."}
+          className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-full bg-surface px-2.5 font-medium text-brand ring-1 ring-line transition-colors hover:ring-brand/40 disabled:cursor-not-allowed disabled:text-muted disabled:hover:ring-line"
+        >
+          {running ? <Loader2 aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" /> : <RefreshCw aria-hidden className="size-3.5" />}
+          {running ? "Agents searching… ~1 min" : live ? "Run again" : "Run research agent"}
+        </button>
+        {live && !running && (
+          <button type="button" onClick={research.clear} className="hover:text-brand hover:underline">
+            Use saved research
+          </button>
+        )}
+      </div>
+      {research.error && (
+        <p role="alert" className="mt-2 flex items-center gap-1.5 text-xs text-bad">
+          <TriangleAlert aria-hidden className="size-3.5 shrink-0" /> {research.error}
+        </p>
+      )}
+
       {sorted.length === 0 ? (
-        <p className="mt-3 text-sm text-muted">The research agent has no signals for this market yet.</p>
+        <p className="mt-3 text-sm text-muted">
+          {live ? "The research agent found no signal it could back with a source. See what it couldn't find below." : "The research agent has no signals for this market yet."}
+        </p>
       ) : (
         <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
           {(all ? sorted : sorted.slice(0, 4)).map((s) => {
@@ -103,6 +144,26 @@ export function SignalsPanel({
         <button type="button" onClick={() => setAll((v) => !v)} className="mt-2 text-xs font-medium text-brand hover:underline">
           {all ? "Show fewer" : `Show all ${sorted.length}`}
         </button>
+      )}
+      {live && live.gaps.length > 0 && (
+        <div className="mt-3 border-t border-l3/30 pt-2">
+          <button
+            type="button"
+            aria-expanded={showGaps}
+            onClick={() => setShowGaps((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-soft hover:text-brand"
+          >
+            <CircleHelp aria-hidden className="size-3.5" />
+            What we couldn&apos;t find · {live.gaps.length}
+          </button>
+          {showGaps && (
+            <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs text-muted">
+              {live.gaps.map((g) => (
+                <li key={g}>{g}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </section>
   );
