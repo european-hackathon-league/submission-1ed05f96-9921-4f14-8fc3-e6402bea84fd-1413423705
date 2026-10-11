@@ -1,0 +1,5 @@
+show me the current workflow of the backend agentic system, becaus ei tshoukd match the architecture we designed, and also update every aprt of the frontend, create another file for it inside /docs
+
+---
+
+also the current data we have fro mthe costumers, i mean bmw provided, are we using it? sending to open ai to analize or what exactly is going on? also trends competitors etc?
