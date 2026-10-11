@@ -230,6 +230,6 @@ def _decision(r: dict[str, Any]) -> Decision:
 def make_store(settings: Settings) -> Store:
     keys = [settings.supabase_secret_key, settings.supabase_service_role_key]
     key = next((k for k in keys if k and k.isascii()), None)  # a masked key copied from a listing is not ASCII
-    if settings.supabase_url and key and not settings.supabase_url.startswith("http://127.0.0.1"):
+    if settings.supabase_url and key:  # hosted project or a local `supabase start` stack
         return SupabaseStore(settings.supabase_url, key)
     return MemoryStore()
