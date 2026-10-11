@@ -145,13 +145,17 @@ export function Pipeline({
    * generations from Supabase, decisions folded from the server's append-only history. Local copies otherwise. */
   const finishAnalysis = useCallback(async () => {
     setGenerations(await pullSessions());
-    const remote = await pullDecisions(cfg.id, scope);
+    const pulled = await pullDecisions(cfg.id, scope);
+    /* The store is shared by the BMW data (local) and the example data (public demo): keep only decisions about
+     * requests and signals that exist in this data set (live-research signals have "R-" ids). */
+    const known = new Set([...data.requests.map((r) => r.id), ...signals.map((sg) => sg.id)]);
+    const remote = pulled && Object.fromEntries(Object.entries(pulled).filter(([id]) => known.has(id) || id.startsWith("R-")));
     const d = remote ?? readDecisions(key);
     if (remote) writeDecisions(key, remote);
     setDecisions(d);
     setOrder(readJson<string[]>(priorityKey(scope, cfg.id), []));
     setStage("review");
-  }, [key, scope, cfg.id]);
+  }, [key, scope, cfg.id, data.requests, signals]);
 
   /* State updaters stay pure (React may run them twice); the server write happens once, outside. */
   const decide = useCallback(
