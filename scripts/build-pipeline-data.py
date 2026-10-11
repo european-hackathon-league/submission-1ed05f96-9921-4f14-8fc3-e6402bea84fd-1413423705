@@ -658,6 +658,8 @@ def build_requests(series: str, df: pd.DataFrame, options: list[dict]) -> list[d
             "category": category,
             "summary": summary,
             "mentions": int(len(ids)),
+            # Sample of BMW record ids behind the request (ids only, no text), for the evidence page.
+            "recordIds": sorted(map(str, ids))[:12],
             "byMarket": ordered_markets(by_market),
             "types": types,
             "sources": [{"name": s, "count": int(c)} for s, c in src.items()],
@@ -707,6 +709,16 @@ def select_attrs(scores: dict[str, float]) -> list[tuple[str, float]]:
     return chosen[:MAX_STUDY_ATTRS]
 
 
+def col_letter(j: int) -> str:
+    """0-based column index → Excel letters (0 → A, 27 → AB)."""
+    s = ""
+    j += 1
+    while j:
+        j, r = divmod(j - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+
 def load_studies() -> dict[str, list[dict]]:
     path = DATA / "bmw" / "customer-studies" / "F70_G60_G68_G70_customer_studies.xlsx"
     xls = pd.ExcelFile(path)
@@ -728,6 +740,7 @@ def load_studies() -> dict[str, list[dict]]:
         series = {"G68": "G60"}.get(code.group(1), code.group(1))  # G68 = China LWB 5 Series
         cols[j] = (series, mk)
     scores: dict[tuple, dict] = defaultdict(dict)
+    refs: dict[tuple, str] = {}  # (series, market, attribute) → "Sheet!B12": where the value is in the workbook
     label = None
     for i in range(2, a.shape[0]):
         first = a.iloc[i, 0]
@@ -736,11 +749,12 @@ def load_studies() -> dict[str, list[dict]]:
                 v = pd.to_numeric(a.iloc[i, j], errors="coerce")
                 if pd.notna(v):
                     scores[key][label] = round(float(v), 2)
+                    refs[(*key, label)] = f"{cneu_name}!{col_letter(j)}{i + 1}"
         elif isinstance(first, str) and first.strip():
             label = first.strip()
     for (series, mk), sc in scores.items():
         for attr, v in select_attrs(sc):
-            out[series].append({"market": mk, "attribute": attr, "score": v})
+            out[series].append({"market": mk, "attribute": attr, "score": v, "ref": refs.get((series, mk, attr))})
 
     # US sheet: long blocks of a 7-point appeal distribution (I Hate It … I Love It) per model column.
     # Mean on 1–7 is converted to 0–10 by ×10/7 (as documented in types.ts), so 7.0 → 10.
@@ -754,8 +768,10 @@ def load_studies() -> dict[str, list[dict]]:
         if code:
             model_cols[j] = code.group(1)
     us_scores: dict[str, dict] = defaultdict(dict)
+    us_refs: dict[tuple, str] = {}
     attr = None
     acc: dict[int, list] = {}
+    rows_seen: list[int] = []
 
     def flush():
         if attr is None:
@@ -765,6 +781,8 @@ def load_studies() -> dict[str, list[dict]]:
             if tot > 0.5:
                 mean = sum(k * p for k, p in pairs) / tot
                 us_scores[model_cols[j]][attr] = round(mean * 10 / 7, 2)
+                if rows_seen:
+                    us_refs[(model_cols[j], attr)] = f"{us_name}!{col_letter(j)}{min(rows_seen) + 1}:{col_letter(j)}{max(rows_seen) + 1}"
 
     for i in range(b.shape[0]):
         first = b.iloc[i, 0]
@@ -776,15 +794,16 @@ def load_studies() -> dict[str, list[dict]]:
                 v = pd.to_numeric(b.iloc[i, j], errors="coerce")
                 if pd.notna(v):
                     acc.setdefault(j, []).append((weight[f.lower()], float(v)))
+            rows_seen.append(i)
         elif f.lower() == "sample total":
             continue
         else:
             flush()
-            attr, acc = f, {}
+            attr, acc, rows_seen = f, {}, []
     flush()
     for series, sc in us_scores.items():
         for a_, v in select_attrs(sc):
-            out[series].append({"market": "US", "attribute": a_, "score": v})
+            out[series].append({"market": "US", "attribute": a_, "score": v, "ref": us_refs.get((series, a_))})
     return out
 
 
