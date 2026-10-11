@@ -1,0 +1,13 @@
+is has some issues the site, check it please. related to openai i was talking about https://developers.openai.com/api/docs/guides/decisions because that was my idea for labeling etc.
+
+---
+
+yeah, my idea is to use this in the pepline for the cron job where the ai analyze the data and label properly should be an script that is execute maybe every month, right?
+
+---
+
+ok, build it, and test it witha  small dataset.
+
+---
+
+we also need a evidence page where PM can have mroe details about a feature etc similar to https://dixi-web-ui-chat.jollyocean-af02a897.swedencentral.azurecontainerapps.io/evidence?market=US&derivative=G60&source=BMW-STUDIES [Image #4] for the profile pages, and details of the features from where is coming the evidence.
