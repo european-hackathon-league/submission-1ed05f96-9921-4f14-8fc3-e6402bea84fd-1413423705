@@ -1,15 +1,18 @@
 """Settings from the environment. Local dev also reads backend/.env and the repo-root .env (both git-ignored)."""
+import os
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
+# Tests set DIXI_NO_ENV_FILES=1 so no real key or database from a .env file can be used by accident.
+ENV_FILES = () if os.environ.get("DIXI_NO_ENV_FILES") else (BACKEND_DIR.parent / ".env", BACKEND_DIR / ".env")
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(BACKEND_DIR.parent / ".env", BACKEND_DIR / ".env"),
+        env_file=ENV_FILES,
         # Empty placeholders copied from .env.example must not override a key set in the other file.
         env_ignore_empty=True,
         extra="ignore",
@@ -31,6 +34,11 @@ class Settings(BaseSettings):
     tavily_search_depth: str = "basic"
     # Tool budget per scout run (Tavily credits ≈ calls on basic depth).
     scout_tool_calls: int = 6
+
+    # Supabase (hosted project "Dixi"). Backend-only keys; without them the API keeps data in memory (dev/tests).
+    supabase_url: str | None = None
+    supabase_secret_key: str | None = None
+    supabase_service_role_key: str | None = None
 
     @property
     def cors_origin_list(self) -> list[str]:
