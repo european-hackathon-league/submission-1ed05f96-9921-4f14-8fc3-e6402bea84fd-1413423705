@@ -9,6 +9,31 @@ Status 11 Oct 2026, branch `backend-agents-tavily`. This page shows what the bac
 - **The PM:** keeps, rejects (with a reason), orders and wishlists.
 - **Storage:** every decision, build, agent run and settings change is stored in Supabase. The next analysis rebuilds **decision memory** from the stored generations, so a past reject lowers that request's score until demand grows past the resurface threshold.
 
+## 0. When does each analysis run? (read this first)
+
+When a PM picks a market and a car, **only one AI step runs live: the principle assessor.** The BMW data and the competitors and trends shown at that moment come from analyses that ran **earlier**. That is deliberate: those analyses are slow, cost credits, and their inputs change monthly, not per click.
+
+| Input | When it is analysed today | What the PM sees after picking market + car | AI? |
+|---|---|---|---|
+| **BMW data**: customer feedback, customer studies, sales, option list | **Before**, by running `scripts/build-pipeline-data.py` by hand whenever BMW delivers new data. It maps BMW's feedback taxonomy to feature requests and counts mentions per market and type | The prepared result (`web/data-local/pipeline.json`): feature requests, counts, studies, sales, options | **No**: deterministic rules, no network |
+| **Competitors and trends** | **On demand**: when the PM clicks **Run research agent** (about 1 min, ≤ 12 Tavily credits). Each run is stored in Supabase (`research_runs`) | The last stored live run for this market + car; if there is none, the saved research from 10 Oct 2026 (`market-signals.ts`). The panel says which one ("Live research · date · N web searches" or "Saved research") | **Yes**, when run: lead researcher + 2 scouts on Tavily |
+| **BMW principles (L1)** | **Live, during the analysis step**, unless the same requests with the same backing were already assessed (then the stored run is reused) | Principle fit per request, conflicts, gaps (principles panel, request details) | **Yes**: principle assessor |
+| **Decision memory** | **Live**: rebuilt from the stored generations when the list opens | "Rejected · reason · who", "Kept before", "Resurfaced" badges and the adjusted score | No: the scoring formula |
+| **Social test (L3)** | When the PM clicks **Launch test (simulated)** on a generation | Simulated 14-day curves | No: seeded simulation |
+
+The analysis screen states this per step, e.g. "grouped by BMW's feedback taxonomy (data script)" and "Competitors & trends: saved research … Run the research agent for a live search".
+
+### Planned: a monthly refresh job (not built)
+
+In production, BMW feedback and the market signals should not depend on someone running a script or clicking a button. Plan: a **scheduled job (cron), at least once a month**, per series and market:
+
+1. **Feedback refresh**: load the latest BMW feedback, studies and sales export, rebuild the feature requests and mention counts (today's `build-pipeline-data.py` logic, moved into the backend), and store the result with its date. Mention counts at each refresh also make demand growth visible to the resurfacing rule.
+2. **Trends and competitors refresh**: run the research agent for every series × market (3 × 3 = 9 runs, ≤ ~110 Tavily credits a month at basic depth) and store each run in `research_runs`.
+3. **Re-assessment**: run the principle assessor on the refreshed requests, so principle fit reflects the new backing.
+4. **Report what changed**: new or grown requests, new signals, requests that resurfaced since a reject, and the gaps of each run, for the PM to review. The job proposes; it never decides.
+
+Where it could run: a GitHub Actions workflow with a monthly `schedule: cron` trigger (https://docs.github.com/en/actions/reference/events-that-trigger-workflows#schedule), or any external scheduler, calling a protected backend endpoint (e.g. `POST /jobs/refresh`), with Supabase holding the results. The PM would still be able to start the research agent by hand between refreshes.
+
 ## 1. One analysis, step by step
 
 ```mermaid
@@ -142,6 +167,7 @@ These steps ran in the browser against the live backend:
 Offline tests: `cd backend && uv run pytest -q` (22 tests). They cover the score against the TypeScript numbers, decay, resurfacing and memory scope, append-only decisions, generations becoming memory, the settings change log, the assessor's id check, and the L1 parser and research agent with fake models and search.
 
 ## 6. Next steps
+0. **Monthly refresh job** (cron) for BMW feedback and for trends and competitors, plus re-assessment: see §0.
 1. **Deploy** the backend to FastAPI Cloud and set `NEXT_PUBLIC_API_URL` on Vercel ([backend README](../../backend/README.md#deploy-fastapi-cloud-public-beta)).
 2. **Principle edit UI** for owners (the API exists).
 3. **Requirement writer** with `get_decision_memory` and the assessor's principle ids (SMART drafts, G1 → draft in [05](05-hitl-map.md)).

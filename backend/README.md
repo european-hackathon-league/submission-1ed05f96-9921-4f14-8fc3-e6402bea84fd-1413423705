@@ -103,6 +103,13 @@ uv run fastapi cloud env set CORS_ORIGINS "https://dixi-wheat.vercel.app,http://
 ```
 Check after deploy: `GET /health` must say `"store": "supabase"`, otherwise data stays in memory. FastAPI Cloud reads `pyproject.toml` + `uv.lock`, `.python-version` (3.13) and the `[tool.fastapi]` entrypoint. Uploads respect `backend/.gitignore`, so `.env` and `.venv` stay local. Hobby tier: free, scale-to-zero (the first request after idle is slow). Docs: https://fastapicloud.com/docs/
 
+## When the agents run
+- **Principle assessor:** live, in the analysis step of the web app, every time a market and car are opened. A stored run is reused when the requests and their backing haven't changed.
+- **Research agent:** only when the PM clicks **Run research agent**. Otherwise the web app shows the last stored run or the saved research.
+- **BMW data:** prepared beforehand by `scripts/build-pipeline-data.py`, rule-based and run by hand.
+
+**Planned:** a monthly cron job, for example `POST /jobs/refresh` triggered by a GitHub Actions `schedule:` cron or another scheduler. It would refresh feedback and run research for every series × market (≤ ~110 Tavily credits a month), re-assess principles, and store what changed for the PM to review. See `../docs/architecture/10-backend-agents.md` §0.
+
 ## Decision memory
 Every build is stored as a generation. `build_memory` (Python) and `buildMemory` (web) take the latest keep or reject per request from earlier generations of the same series (and market, unless the team set memory scope to "all"). A past reject lowers the score with a half-life, and lifts once demand has grown past the team's resurface threshold. A past keep adds a small bonus. The principle assessor reads the same memory through its tool. Matching is by series and request title today; pgvector similarity for reworded requests is planned.
 

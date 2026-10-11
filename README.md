@@ -72,6 +72,14 @@ sequenceDiagram
   Note over Web,DB: The next analysis of this series + market reads this generation:<br/>rejected requests rank lower ("Rejected · reason · who"), kept ones get a bonus,<br/>a reject comes back as "Resurfaced" when demand grew ≥ 30 %.
 ```
 
+## When each analysis runs
+
+After the PM picks a market and a car, **the principle assessor runs live**. The other inputs were analysed earlier and the screen says so:
+- **BMW data:** prepared by the data script, rule-based, run by hand when new data arrives.
+- **Competitors and trends:** the last stored run of the research agent, or the saved research. The agent itself runs when the PM clicks **Run research agent**.
+
+**Planned (not built):** a monthly cron job that refreshes BMW feedback and trends and competitors for every series and market, re-runs the principle assessor, and reports what changed for the PM to review. Details: [`docs/architecture/10-backend-agents.md` §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first).
+
 ## What works today, and where
 
 | Claim | Status | Code |
@@ -85,6 +93,7 @@ sequenceDiagram
 | Generations saved and read back as memory by the next generation | ✅ | [`sessions.ts`](web/src/lib/pipeline/sessions.ts), `PUT /generations`, `GET /memory` |
 | 3 car profiles, L1 = principle fit + PM priority, tensions listed, PDF via print | ✅ | [`profiles.ts`](web/src/lib/pipeline/profiles.ts), [`Profiles.tsx`](web/src/components/pipeline/Profiles.tsx) |
 | L3 social test | 🟡 simulated, labelled in the UI | [`analytics.ts`](web/src/lib/pipeline/analytics.ts) |
+| Monthly refresh of BMW feedback + trends/competitors (cron) | ⚪ planned; today the data script runs by hand and research runs on request | [doc 10 §0](docs/architecture/10-backend-agents.md#0-when-does-each-analysis-run-read-this-first) |
 | Gates G1–G4, engineering/BOM check, Codebeamer export, postpone, side-by-side generation compare | ⚪ target design only | [`docs/architecture/05-hitl-map.md`](docs/architecture/05-hitl-map.md) |
 
 **Honest by design.** Each agent returns what it could not find (`gaps`), and the principle assessor lists conflicts instead of averaging them away. Markets without comments fall back to all markets with a lower-confidence note. Every step of the analysis screen says where its data comes from.
