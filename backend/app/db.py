@@ -12,8 +12,21 @@ from app.config import Settings
 from app.models.core import Decision, DecisionIn, Generation, Principle, PrincipleEdit, ScoringSettings, SettingsState, SettingsUpdate
 
 
+def strip_customer_text(payload: Any) -> Any:
+    """Defence in depth: BMW customer quotes never go into Supabase, whatever a client sends."""
+    if isinstance(payload, dict):
+        return {k: ([] if k == "quotes" else strip_customer_text(v)) for k, v in payload.items()}
+    if isinstance(payload, list):
+        return [strip_customer_text(v) for v in payload]
+    return payload
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+class StoreError(RuntimeError):
+    """The database refused or failed a request; the API answers 502 with this message."""
 
 
 class Store(Protocol):
@@ -84,7 +97,7 @@ class MemoryStore:
         return [d for d in self.decisions if d.series == series and (market is None or d.market == market)]
 
     async def save_generation(self, g):
-        self.generations[g.id] = g
+        self.generations[g.id] = g.model_copy(update={"payload": strip_customer_text(g.payload)})
 
     async def list_generations(self, series=None):
         gs = [g for g in self.generations.values() if series is None or g.series == series]
@@ -134,14 +147,15 @@ class SupabaseStore:
 
     async def _get(self, table: str, params: dict[str, str]) -> list[dict[str, Any]]:
         r = await self.http.get(f"/{table}", params=params)
-        r.raise_for_status()
+        if r.status_code >= 400:
+            raise StoreError(f"Supabase {table}: {r.status_code} {r.text[:300]}")
         return r.json()
 
     async def _post(self, table: str, rows: Any, upsert: bool = False) -> list[dict[str, Any]]:
         prefer = "return=representation" + (",resolution=merge-duplicates" if upsert else "")
         r = await self.http.post(f"/{table}", json=rows, headers={"Prefer": prefer})
         if r.status_code >= 400:
-            raise ValueError(f"Supabase {table}: {r.status_code} {r.text[:300]}")
+            raise StoreError(f"Supabase {table}: {r.status_code} {r.text[:300]}")
         return r.json()
 
     async def list_principles(self, markets, series):
@@ -161,7 +175,8 @@ class SupabaseStore:
             json={"statement": edit.statement, "boundary": edit.boundary, "version": cur[0]["version"] + 1,
                   "updated_by": edit.by, "updated_at": _now()},
         )
-        r.raise_for_status()
+        if r.status_code >= 400:
+            raise StoreError(f"Supabase principles: {r.status_code} {r.text[:300]}")
         return Principle.model_validate(r.json()[0])
 
     async def add_decision(self, d):
@@ -180,7 +195,7 @@ class SupabaseStore:
     async def save_generation(self, g):
         await self._post("generations", {
             "id": g.id, "series": g.series, "market": g.market, "created_at": g.createdAt, "created_by": g.createdBy,
-            "created_by_role": g.createdByRole, "payload": g.payload, "updated_at": _now()}, upsert=True)
+            "created_by_role": g.createdByRole, "payload": strip_customer_text(g.payload), "updated_at": _now()}, upsert=True)
 
     async def list_generations(self, series=None):
         params = {"select": "*", "order": "created_at.desc", "limit": "100"}
@@ -191,7 +206,9 @@ class SupabaseStore:
                 for r in await self._get("generations", params)]
 
     async def delete_generation(self, gid):
-        (await self.http.delete("/generations", params={"id": f"eq.{gid}"})).raise_for_status()
+        r = await self.http.delete("/generations", params={"id": f"eq.{gid}"})
+        if r.status_code >= 400:
+            raise StoreError(f"Supabase generations: {r.status_code} {r.text[:300]}")
 
     async def save_run(self, table, row):
         return (await self._post(table, row))[0]["id"]

@@ -27,6 +27,8 @@ export interface Session {
   /** Agent runs this build used (Supabase ids), for the audit trail. */
   researchRunId?: string | null;
   assessmentId?: string | null;
+  /** True once the backend has this generation (so a generation deleted elsewhere is not uploaded again). */
+  synced?: boolean;
 }
 
 const KEY = "dixi:sessions";
@@ -48,19 +50,28 @@ function write(list: Session[]) {
   }
 }
 
+/** What goes to Supabase: the generation without BMW customer text. Quotes stay in this browser only. */
 function toServer(s: Session) {
-  return { id: s.id, series: s.series, market: s.scope, createdAt: s.createdAt, createdBy: s.createdBy, createdByRole: s.createdByRole, payload: s };
+  const { synced: _synced, ...rest } = s;
+  void _synced;
+  const payload = { ...rest, profiles: s.profiles.map((p) => ({ ...p, requests: p.requests.map((r) => ({ ...r, quotes: [] })) })) };
+  return { id: s.id, series: s.series, market: s.scope, createdAt: s.createdAt, createdBy: s.createdBy, createdByRole: s.createdByRole, payload };
+}
+
+async function upload(s: Session) {
+  if (await push(`/generations/${s.id}`, { method: "PUT", body: JSON.stringify(toServer(s)) }))
+    write(readSessions().map((x) => (x.id === s.id ? { ...x, synced: true } : x)));
 }
 
 export function saveSession(s: Session) {
   write([s, ...readSessions().filter((x) => x.id !== s.id)]);
-  void push(`/generations/${s.id}`, { method: "PUT", body: JSON.stringify(toServer(s)) });
+  void upload(s);
 }
 
 export function updateSession(id: string, patch: Partial<Session>) {
   write(readSessions().map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const s = readSessions().find((x) => x.id === id);
-  if (s) void push(`/generations/${id}`, { method: "PUT", body: JSON.stringify(toServer(s)) });
+  if (s) void upload(s);
 }
 
 export function deleteSession(id: string) {
@@ -68,16 +79,24 @@ export function deleteSession(id: string) {
   void push(`/generations/${id}`, { method: "DELETE" });
 }
 
-/** Merge the generations stored in Supabase into this browser (server wins by id) and upload local-only ones.
- *  Called before decision memory is built, so the next generation sees every earlier build, not only this browser's. */
+/** Merge the generations stored in Supabase into this browser and upload the ones built offline (never synced).
+ *  A synced generation that is gone from the server was deleted elsewhere: it is dropped here too.
+ *  Local copies keep their quotes (the server copy has none). Called before decision memory is built,
+ *  so the next generation sees every earlier build, not only this browser's. */
 export async function pullSessions(): Promise<Session[]> {
   const remote = await pull<{ id: string; payload: Session }[]>("/generations");
   if (!remote) return readSessions();
-  const byId = new Map(readSessions().map((s) => [s.id, s]));
+  const local = new Map(readSessions().map((s) => [s.id, s]));
   const remoteIds = new Set(remote.map((g) => g.id));
-  for (const s of byId.values()) if (!remoteIds.has(s.id)) void push(`/generations/${s.id}`, { method: "PUT", body: JSON.stringify(toServer(s)) });
-  remote.forEach((g) => byId.set(g.id, g.payload));
-  write([...byId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  const merged = new Map<string, Session>();
+  for (const s of local.values()) {
+    if (remoteIds.has(s.id)) continue;
+    if (s.synced) continue; // deleted on the server
+    merged.set(s.id, s);
+    void upload(s);
+  }
+  remote.forEach((g) => merged.set(g.id, local.get(g.id) ? { ...local.get(g.id)!, synced: true } : { ...g.payload, synced: true }));
+  write([...merged.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
   return readSessions();
 }
 

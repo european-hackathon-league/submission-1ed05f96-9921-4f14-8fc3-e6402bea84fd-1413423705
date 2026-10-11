@@ -134,3 +134,15 @@ BMW states the pace differs by market. [S1]
     assert p.statement.startswith("Manage the transition") and p.boundary.startswith("Not proof")
     assert p.evidence == "BMW states the pace differs by market. [S1]"
     assert p.sources[0].url == "https://www.bmwgroup.com/en/report/2025/index.html"
+
+
+def test_customer_quotes_never_reach_the_store(client):
+    c, app = client
+    req = {"id": "r1", "title": "Rear fridge", "quotes": ["a customer sentence"], "mentions": 3}
+    payload = {"id": "G-Q", "series": "G60", "scope": "EU", "createdAt": "2026-10-01T00:00:00Z", "decisions": {},
+               "profiles": [{"id": "fix", "requests": [req]}]}
+    gen = {"id": "G-Q", "series": "G60", "market": "EU", "createdAt": payload["createdAt"], "payload": payload}
+    assert c.put("/generations/G-Q", json=gen).status_code == 204
+    stored = c.get("/generations").json()[0]["payload"]
+    assert stored["profiles"][0]["requests"][0]["quotes"] == []
+    assert "a customer sentence" not in json.dumps(stored)
