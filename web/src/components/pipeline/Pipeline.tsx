@@ -124,7 +124,7 @@ export function Pipeline({
 
   /* L1: principles for this market + series (Supabase) and the principle assessor's fit per request. */
   const principles = usePrinciples(scope, cfg.id);
-  const assessment = useAssessment(scope, cfg.id);
+  const assessment = useAssessment(scope, cfg.id, origin);
   /* What the assessor gets: aggregate request data only (title, category, mention count, backing signal titles). */
   const assessInputs: AssessInput[] = useMemo(
     () =>

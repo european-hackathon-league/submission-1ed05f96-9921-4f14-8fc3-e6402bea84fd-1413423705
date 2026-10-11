@@ -160,3 +160,17 @@ def test_latest_research_run_is_kept_per_dataset(client):
     bmw = c.get("/research/signals/latest", params={"series": "G60", "market": "EU", "dataset": "bmw"}).json()
     ex = c.get("/research/signals/latest", params={"series": "G60", "market": "EU", "dataset": "example"}).json()
     assert bmw["id"] != ex["id"] and bmw["id"].endswith("-1") and ex["id"].endswith("-2")
+
+
+def test_latest_assessment_is_kept_per_dataset(client):
+    c, app = client
+    import asyncio
+
+    store = app.state.store
+    res = {"fits": [], "conflicts": [], "gaps": [], "series": "G60", "market": "EU", "principleIds": [], "model": "m", "generatedAt": "t"}
+    for ds in ("bmw", "example"):
+        asyncio.run(store.save_run("principle_assessments", {"series": "G60", "market": "EU", "principle_ids": [], "model": "m",
+                                                             "request": {"dataset": ds}, "result": {**res, "basis": ds}}))
+    for ds in ("bmw", "example"):
+        got = c.get("/assess/principles/latest", params={"series": "G60", "market": "EU", "dataset": ds}).json()
+        assert got["basis"] == ds

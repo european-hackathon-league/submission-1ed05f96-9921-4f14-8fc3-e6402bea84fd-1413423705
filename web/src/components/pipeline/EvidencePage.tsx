@@ -117,7 +117,7 @@ function Evidence({
     (SOURCE_IDS as readonly string[]).includes((initialSource ?? "").replace(/-[FG]\d{2}$/, "")) ? ((initialSource ?? "").replace(/-[FG]\d{2}$/, "") as SourceId) : null,
   );
   const principles = usePrinciples(gen.scope, gen.series as SeriesId);
-  const cached = useAssessment(gen.scope, gen.series as SeriesId);
+  const cached = useAssessment(gen.scope, gen.series as SeriesId, origin);
   /* The assessment this generation was built with (by id); else the cached one for its market + series. */
   const [linked, setLinked] = useState<Assessment | null>(null);
   useEffect(() => {
@@ -126,7 +126,7 @@ function Evidence({
     /* Draft (no linked run): the latest stored assessment for this market + series, if this browser has none cached. */
     if (!gen.assessmentId) {
       if (!cached.result)
-        pull<Assessment | null>(`/assess/principles/latest?series=${gen.series}&market=${gen.scope}`).then((a) => live && a && setLinked(a));
+        pull<Assessment | null>(`/assess/principles/latest?series=${gen.series}&market=${gen.scope}&dataset=${origin}`).then((a) => live && a && setLinked(a));
       return () => {
         live = false;
       };
@@ -136,7 +136,7 @@ function Evidence({
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gen.assessmentId, gen.series, gen.scope]);
+  }, [gen.assessmentId, gen.series, gen.scope, origin]);
   /* With a linked run, wait for it rather than briefly showing a different (cached) assessment. */
   const assessment = gen.assessmentId && API_URL ? linked : (linked ?? cached.result);
   const fits = useMemo(() => new Map((assessment?.fits ?? []).map((f) => [f.requestId, f])), [assessment]);

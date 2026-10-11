@@ -28,6 +28,7 @@ async def assessment_by_id(rid: str, request: Request) -> AssessResult:
 
 
 @router.get("/principles/latest", response_model=AssessResult | None)
-async def latest_assessment(request: Request, series: SeriesId, market: Scope) -> AssessResult | None:
-    row = await store_of(request).latest_run("principle_assessments", series, market)
+async def latest_assessment(request: Request, series: SeriesId, market: Scope, dataset: str | None = None) -> AssessResult | None:
+    """The last assessment for this series + market (and dataset, so example and BMW runs never mix)."""
+    row = await store_of(request).latest_run("principle_assessments", series, market, dataset)
     return AssessResult.model_validate({**row["result"], "id": row["id"]}) if row else None

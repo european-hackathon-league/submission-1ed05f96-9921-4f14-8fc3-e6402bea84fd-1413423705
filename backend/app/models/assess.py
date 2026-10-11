@@ -17,6 +17,7 @@ class AssessRequest(BaseModel):
     market: Scope
     requests: list[RequestInput] = Field(min_length=1, max_length=40)
     basis: str | None = Field(default=None, description="Client key of this input (ids + backing); echoed so a stored run can be reused")
+    dataset: str = Field(default="bmw", description="'bmw' (local data) or 'example' (public demo): keeps the two data sets' runs apart")
 
 
 class RequestFit(BaseModel):
