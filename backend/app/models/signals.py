@@ -52,6 +52,9 @@ class ResearchRequest(BaseModel):
     featureRequests: list[str] = Field(
         default_factory=list, description="Current feature-request titles, so signals can be linked via relatesTo"
     )
+    categories: list[Category] | None = Field(
+        default=None, description="Only research these categories (None = all four)"
+    )
     maxSignals: int = Field(default=8, ge=1, le=20)
 
 

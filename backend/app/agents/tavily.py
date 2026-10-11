@@ -11,7 +11,7 @@ from pydantic_ai import RunContext
 from pydantic_ai.mcp import CallToolFunc, MCPToolset
 from pydantic_ai.toolsets import AbstractToolset
 
-from app.agents.deps import ResearchDeps
+from app.agents.deps import BUDGET_USED_UP, ResearchDeps
 from app.config import Settings
 
 ALLOWED_TOOLS = {"tavily_search", "tavily_extract"}
@@ -25,6 +25,8 @@ def record_urls(deps: ResearchDeps, result: Any) -> None:
 
 
 async def _record(ctx: RunContext[ResearchDeps], call_tool: CallToolFunc, name: str, args: dict[str, Any]) -> Any:
+    if not ctx.deps.take_search(ctx):
+        return BUDGET_USED_UP
     result = await call_tool(name, args)
     record_urls(ctx.deps, result)
     return result

@@ -7,7 +7,7 @@ from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart, ToolCall
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.toolsets import FunctionToolset
 
-from app.agents.deps import ResearchDeps
+from app.agents.deps import BUDGET_USED_UP, ResearchDeps
 from app.agents.research import ResearchModels, build_research_agent, run_research, verify_sources
 from app.agents.tavily import record_urls
 from app.models.signals import MarketSignal, ResearchRequest
@@ -21,6 +21,8 @@ def fake_search() -> FunctionToolset[ResearchDeps]:
 
     @ts.tool
     def tavily_search(ctx: RunContext[ResearchDeps], query: str) -> str:
+        if not ctx.deps.take_search(ctx):
+            return BUDGET_USED_UP
         out = f"Title: Euro NCAP 2026\nURL: {REAL}\nContent: physical buttons rewarded ({query})"
         record_urls(ctx.deps, out)
         return out
@@ -98,3 +100,28 @@ def test_api_runs_agent(monkeypatch):
         r = client.post("/research/signals", json={"series": "G60", "market": "EU", "maxSignals": 5})
         assert r.status_code == 200, r.text
         assert r.json()["signals"][0]["sources"][0]["url"] == REAL
+
+
+async def test_soft_budget_lets_scout_answer_after_parallel_searches():
+    def greedy(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        if len(messages) == 1:  # ten parallel searches in one turn, budget is 3
+            return ModelResponse(parts=[ToolCallPart("tavily_search", {"query": f"q{i}"}) for i in range(10)])
+        rets = [p.content for m in messages for p in getattr(m, "parts", []) if isinstance(p, ToolReturnPart)]
+        assert rets.count(BUDGET_USED_UP) == 7
+        return ModelResponse(parts=[ToolCallPart(final_tool(info), {"signals": [signal("Physical buttons are back", REAL)]})])
+
+    def lead(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        returns = [p for m in messages for p in getattr(m, "parts", []) if isinstance(p, ToolReturnPart)]
+        if not returns:
+            return ModelResponse(parts=[ToolCallPart("delegate_task", {"agent_name": "trend_scout", "task": "trends"})])
+        return ModelResponse(parts=[ToolCallPart(final_tool(info), json.loads(returns[0].content))])
+
+    a = build_research_agent(ResearchModels(fast=FunctionModel(greedy), strong=FunctionModel(lead)), fake_search(), 3)
+    res = await run_research(a, ResearchRequest(series="G60", market="EU"), "test", search_budget=3)
+    assert res.searches == 3 and len(res.signals) == 1
+
+
+async def test_category_filter_is_enforced_after_the_model():
+    req = ResearchRequest(series="G60", market="EU", categories=["Powertrain"])
+    res = await run_research(agent(), req, "test")
+    assert res.signals == []  # the fake scouts only return Interior signals

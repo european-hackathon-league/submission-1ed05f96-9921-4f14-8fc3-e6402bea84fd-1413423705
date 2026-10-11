@@ -15,4 +15,4 @@ async def research_signals(body: ResearchRequest, request: Request) -> ResearchR
     agent = request.app.state.research_agent
     if agent is None:
         raise HTTPException(503, detail=request.app.state.research_unavailable)
-    return await run_research(agent, body, request.app.state.research_model)
+    return await run_research(agent, body, request.app.state.research_model, request.app.state.search_budget)

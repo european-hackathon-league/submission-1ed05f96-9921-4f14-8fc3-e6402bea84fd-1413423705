@@ -97,7 +97,8 @@ def build_research_agent(
         )
         return SubAgent(
             agent,
-            usage_limits=UsageLimits(tool_calls_limit=scout_tool_calls, request_limit=scout_tool_calls + 4),
+            # Safety net only; the real budget is ResearchDeps.search_budget (soft, see deps.py).
+            usage_limits=UsageLimits(tool_calls_limit=40, request_limit=scout_tool_calls + 6),
             timeout_seconds=180,
             max_calls=1,
             on_failure="Report the scout as failed in gaps and continue with what you have.",
@@ -151,16 +152,21 @@ def prompt_for(req: ResearchRequest, today: str) -> str:
     ]
     if req.focus:
         lines.append(f"PM focus: {req.focus}")
+    if req.categories:
+        lines.append(f"Only categories: {', '.join(req.categories)}. Search and report nothing outside them.")
     if req.featureRequests:
         lines.append("PM feature-request titles (for relatesTo):\n" + "\n".join(f"- {t}" for t in req.featureRequests))
     return "\n".join(lines)
 
 
-async def run_research(agent: Agent[ResearchDeps, LeadOutput], req: ResearchRequest, model_label: str) -> ResearchResult:
+async def run_research(
+    agent: Agent[ResearchDeps, LeadOutput], req: ResearchRequest, model_label: str, search_budget: int = 6
+) -> ResearchResult:
     now = datetime.now(UTC)
-    deps = ResearchDeps()
+    deps = ResearchDeps(search_budget=search_budget)
     result = await agent.run(prompt_for(req, now.date().isoformat()), deps=deps)
-    signals, dropped = verify_sources(result.output.signals[: req.maxSignals], deps.seen_urls)
+    proposed = [s for s in result.output.signals if not req.categories or s.category in req.categories]
+    signals, dropped = verify_sources(proposed[: req.maxSignals], deps.seen_urls)
     for s in signals:  # the request defines scope; scouts sometimes widen it
         if req.series not in s.series:
             s.series.append(req.series)

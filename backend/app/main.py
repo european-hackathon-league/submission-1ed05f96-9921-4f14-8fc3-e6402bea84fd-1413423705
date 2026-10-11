@@ -16,6 +16,7 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     app.state.research_agent = None
     app.state.research_model = settings.openai_model_strong
+    app.state.search_budget = settings.scout_tool_calls
     async with AsyncExitStack() as stack:
         try:
             search = tavily_toolset(settings)
