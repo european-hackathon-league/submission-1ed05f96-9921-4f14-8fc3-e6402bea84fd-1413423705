@@ -1,0 +1,10 @@
+{
+  "_note": "Fictional catalog for tests. Titles mirror the kind of requests the data script builds; no BMW data.",
+  "series": [{"id": "G60", "requests": [
+    {"id": "T-R01", "series": "G60", "title": "More real-world electric range", "category": "Powertrain", "summary": "Owners want more usable range, especially in winter and on the motorway."},
+    {"id": "T-R02", "series": "G60", "title": "Simpler iDrive menus and touchscreen", "category": "Digital", "summary": "Menus are deep and functions are hard to find while driving."},
+    {"id": "T-R03", "series": "G60", "title": "More comfortable, better-equipped seats", "category": "Interior", "summary": "Seat comfort on long trips, ventilation and massage."},
+    {"id": "T-R04", "series": "G60", "title": "Reliable keys and keyless entry", "category": "Digital", "summary": "Keys not detected, doors that do not unlock, digital key problems."},
+    {"id": "T-R05", "series": "G60", "title": "Better visibility: mirrors, glass and wipers", "category": "Exterior", "summary": "Wipers, mirrors and glass that limit the view."}
+  ]}]
+}

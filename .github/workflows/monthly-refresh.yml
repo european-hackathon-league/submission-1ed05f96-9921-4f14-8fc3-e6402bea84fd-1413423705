@@ -1,0 +1,39 @@
+# Monthly refresh (backend/scripts/monthly_refresh.py): label new customer comments with the OpenAI Decisions API,
+# re-run the research agent and the principle assessor, store the report in Supabase for the PM to review.
+#
+# OFF by default. It runs only when the repository variable DIXI_REFRESH_ENABLED is "true", and it needs:
+#   secrets: OPENAI_API_KEY, TAVILY_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+#            DIXI_FEEDBACK_EXPORT_URL  (a signed URL to the month's comments JSON from BMW's secure drop)
+# Sending comment text to OpenAI (--send) requires BMW's agreement. Until then, keep it off or run the dry run locally.
+name: monthly-refresh
+
+on:
+  schedule:
+    - cron: "0 3 1 * *" # 03:00 UTC on the 1st of every month
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    if: vars.DIXI_REFRESH_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --group jobs
+      - name: Fetch this month's export (never committed)
+        run: curl -fsSL "$DIXI_FEEDBACK_EXPORT_URL" -o "$RUNNER_TEMP/feedback.json"
+        env:
+          DIXI_FEEDBACK_EXPORT_URL: ${{ secrets.DIXI_FEEDBACK_EXPORT_URL }}
+      - name: Label, research, assess, store
+        run: >
+          uv run python -I scripts/monthly_refresh.py --source file "$RUNNER_TEMP/feedback.json"
+          --labeler decisions --send --research --assess --store
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TAVILY_KEYLESS: "false"

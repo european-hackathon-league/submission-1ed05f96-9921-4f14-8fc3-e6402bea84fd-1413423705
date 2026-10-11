@@ -1,0 +1,17 @@
+{
+  "_note": "Fictional comments written for tests (not BMW data, not real customers). taxonomy_request = the label a human would give.",
+  "comments": [
+    {"id": "S-01", "series": "G60", "market": "EU", "text": "In January the range drops so much that I have to stop twice on a 300 km trip.", "taxonomy_request": "T-R01", "taxonomy_type": "want"},
+    {"id": "S-02", "series": "G60", "market": "US", "text": "Highway range is far below what the brochure promised.", "taxonomy_request": "T-R01", "taxonomy_type": "want"},
+    {"id": "S-03", "series": "G60", "market": "EU", "text": "To change the seat heating I need three taps in a submenu. That is dangerous while driving.", "taxonomy_request": "T-R02", "taxonomy_type": "difficult"},
+    {"id": "S-04", "series": "G60", "market": "CN", "text": "I can never find the setting for the ambient light; the menu structure is confusing.", "taxonomy_request": "T-R02", "taxonomy_type": "difficult"},
+    {"id": "S-05", "series": "G60", "market": "EU", "text": "After two hours on the motorway my lower back hurts; the seats need better support.", "taxonomy_request": "T-R03", "taxonomy_type": "want"},
+    {"id": "S-06", "series": "G60", "market": "US", "text": "Please offer ventilated front seats, summers here are very hot.", "taxonomy_request": "T-R03", "taxonomy_type": "want"},
+    {"id": "S-07", "series": "G60", "market": "EU", "text": "The car often does not recognise the key and the doors stay locked.", "taxonomy_request": "T-R04", "taxonomy_type": "defect"},
+    {"id": "S-08", "series": "G60", "market": "CN", "text": "The digital key on my phone stopped working after the last update.", "taxonomy_request": "T-R04", "taxonomy_type": "defect"},
+    {"id": "S-09", "series": "G60", "market": "EU", "text": "The wipers leave a wide streak right in my line of sight.", "taxonomy_request": "T-R05", "taxonomy_type": "defect"},
+    {"id": "S-10", "series": "G60", "market": "US", "text": "Side mirrors are too small to see the lane next to me.", "taxonomy_request": "T-R05", "taxonomy_type": "want"},
+    {"id": "S-11", "series": "G60", "market": "EU", "text": "I would love a built-in fridge between the rear seats for long journeys.", "taxonomy_request": null, "taxonomy_type": "want"},
+    {"id": "S-12", "series": "G60", "market": "US", "text": "Absolutely love how quiet and smooth this car is on the highway.", "taxonomy_request": null, "taxonomy_type": "praise"}
+  ]
+}

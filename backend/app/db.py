@@ -44,6 +44,8 @@ class Store(Protocol):
     async def delete_generation(self, gid: str) -> None: ...
     async def save_run(self, table: str, row: dict[str, Any]) -> str: ...
     async def latest_run(self, table: str, series: str, market: str) -> dict[str, Any] | None: ...
+    async def save_refresh(self, row: dict[str, Any], labels: list[dict[str, Any]]) -> str: ...
+    async def latest_refresh(self) -> dict[str, Any] | None: ...
     async def get_settings(self) -> SettingsState: ...
     async def save_settings(self, u: SettingsUpdate) -> SettingsState: ...
     async def list_setting_changes(self, limit: int = 50) -> list[dict[str, Any]]: ...
@@ -67,7 +69,8 @@ class MemoryStore:
         self.principles: dict[str, Principle] = {}
         self.decisions: list[Decision] = []
         self.generations: dict[str, Generation] = {}
-        self.runs: dict[str, list[dict[str, Any]]] = {"research_runs": [], "principle_assessments": []}
+        self.runs: dict[str, list[dict[str, Any]]] = {"research_runs": [], "principle_assessments": [], "refresh_runs": []}
+        self.labels: list[dict[str, Any]] = []
         self.settings = SettingsState(settings=ScoringSettings())
         self.changes: list[dict[str, Any]] = []
 
@@ -121,6 +124,15 @@ class MemoryStore:
 
     async def latest_run(self, table, series, market):
         rows = [r for r in self.runs[table] if r["series"] == series and r["market"] == market]
+        return rows[-1] if rows else None
+
+    async def save_refresh(self, row, labels):
+        rid = await self.save_run("refresh_runs", row)
+        self.labels += [{"refresh_id": rid, **lab} for lab in labels]
+        return rid
+
+    async def latest_refresh(self):
+        rows = self.runs["refresh_runs"]
         return rows[-1] if rows else None
 
     async def get_settings(self):
@@ -236,6 +248,16 @@ class SupabaseStore:
     async def latest_run(self, table, series, market):
         rows = await self._get(table, {"select": "*", "series": f"eq.{series}", "market": f"eq.{market}",
                                        "order": "created_at.desc", "limit": "1"})
+        return rows[0] if rows else None
+
+    async def save_refresh(self, row, labels):
+        rid = (await self._post("refresh_runs", row))[0]["id"]
+        for i in range(0, len(labels), 500):  # PostgREST bulk insert in chunks
+            await self._post("feedback_labels", [{"refresh_id": rid, **lab} for lab in labels[i:i + 500]])
+        return rid
+
+    async def latest_refresh(self):
+        rows = await self._get("refresh_runs", {"select": "*", "order": "created_at.desc", "limit": "1"})
         return rows[0] if rows else None
 
     async def get_settings(self):

@@ -15,6 +15,8 @@
 !/scripts/
 # Supabase: config + migrations (the CLI's .temp/ link state stays local)
 !/supabase/
+# GitHub Actions (monthly refresh workflow, off by default)
+!/.github/
 /supabase/.temp/
 # Entire (entire.io): shared settings, runners and agent hooks are committed; personal settings are not
 !/.entire/
