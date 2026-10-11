@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M4N2S6JYDPEW8CJS0JC39TYA",
+  "strategy": "manual-commit",
+  "branch": "evidence-links-and-dataset-split",
+  "checkpoints_count": 12,
+  "files_touched": [
+    "web/src/app/dashboard/evidence/page.tsx",
+    "web/src/components/pipeline/EvidencePage.tsx",
+    "web/src/components/pipeline/Profiles.tsx",
+    "web/src/components/pipeline/RequestCard.tsx",
+    "web/src/lib/pipeline/evidence.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 764,
+    "cache_read_tokens": 803603,
+    "output_tokens": 1455,
+    "api_call_count": 1
+  }
+}
