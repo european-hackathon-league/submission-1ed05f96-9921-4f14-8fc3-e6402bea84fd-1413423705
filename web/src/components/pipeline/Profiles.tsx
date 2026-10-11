@@ -212,6 +212,7 @@ export function ProfileDetail({
         signals={trace ? [...profile.backing, ...profile.wishes].filter((sg) => sg.relatesTo.includes(trace.title)) : []}
         decision={trace ? decisions[trace.id] : undefined}
         priority={trace?.priority}
+        evidenceHref={trace ? evidenceHref(session.id, profile.id, trace.id) : undefined}
         onClose={() => setTrace(null)}
       />
 

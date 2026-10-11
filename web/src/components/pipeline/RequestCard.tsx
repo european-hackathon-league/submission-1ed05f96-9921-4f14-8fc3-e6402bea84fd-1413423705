@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ExternalLink, GripVertical, History, Info, RotateCcw, Tag, TrendingUp, Undo2, Users, X } from "lucide-react";
+import { Check, ExternalLink, FileSearch, GripVertical, History, Info, RotateCcw, Tag, TrendingUp, Undo2, Users, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Decision, Urgency } from "@/lib/pipeline/profiles";
 import type { Scored } from "@/lib/pipeline/scoring";
@@ -277,6 +277,7 @@ export function RequestDetails({
   decision,
   priority,
   fit,
+  evidenceHref,
   onClose,
 }: {
   req: FeatureRequest | null;
@@ -287,6 +288,8 @@ export function RequestDetails({
   priority?: number;
   /** L1: what the principle assessor said about this request. */
   fit?: RequestFit;
+  /** Link to this request's card on the evidence page. */
+  evidenceHref?: string;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -365,6 +368,15 @@ export function RequestDetails({
                 </li>
               </ol>
             </Block>
+          )}
+
+          {evidenceHref && (
+            <a
+              href={evidenceHref}
+              className="inline-flex items-center gap-1.5 self-start rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-deep"
+            >
+              <FileSearch aria-hidden className="size-4" /> Open evidence: every source behind this request
+            </a>
           )}
 
           {scored && (
