@@ -1,0 +1,43 @@
+<task-notification>
+<task-id>ac4055b9dd8ec1483</task-id>
+<tool-use-id>toolu_012hMBWNRtULLwXgrNRFYxoj</tool-use-id>
+<output-file>/Volumes/PJ/DevCache/claude-tmp/claude-501/-Volumes-PJ-peresjav-hackathons-ehl-final-minuch-2026/014359f5-e686-4aa8-8891-31163a7924d1/tasks/ac4055b9dd8ec1483.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-audit claims after fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I found 12 problems, listed below from most to least severe. The web-to-backend contract matches: every path, method, query param and field name lines up with the Pydantic models, and the market scope values agree on both sides. Principle fit reaches `scoreRequest` (Pipeline.tsx:190) and `buildProfiles` (Pipeline.tsx:321), and memory from pulled generations reaches `buildMemory` (Pipeline.tsx:141-146). There are uncommitted edits in the working tree to Pipeline.tsx, PrinciplesPanel.tsx and principles.ts. They fix the "Loading L1 principles…" text that never changed when the backend was down, so that issue is not listed.
+
+**High**
+1. **BMW customer quotes are uploaded to Supabase.** Profile requests are full `FeatureRequest` objects, including `quotes` (profiles.ts:62; filled by scripts/build-pipeline-data.py:664). The whole Session is then sent as the generation `payload` (sessions.ts:52,57). This contradicts README.md:92, docs/architecture/03-data-model.md:15, the data table in 10-backend-agents.md §3, and the schema header comment. Fix: in `toServer`, strip `quotes`, `sources` and `summary` from `profiles[].requests`, or store only ids and titles.
+
+**Medium**
+2. **Deleted generations come back.** `pullSessions` re-uploads any local generation the server doesn't have (sessions.ts:78). A generation deleted in browser A is pushed back up by browser B. Fix: only upload generations that have never been synced (for example a `synced` flag), or keep a list of deleted ids.
+3. **The assessor can get stale backing.** The Analysis effect runs once and keeps the first render's `assess` closure (Pipeline.tsx:398, 740-760). If live research arrives later from `/research/signals/latest`, the assessor was still sent the saved-research backing titles. And because `basisOf` only uses request ids (principles.ts:125), the assessment is never redone after that. Fix: add the backing titles (or the research run id) to the basis.
+4. **The assessment cache breaks above 40 requests.** The web sends only `requests.slice(0, 40)` but builds `basis` from all of them (principles.ts:143-145). The stored-run reuse at :166 then never matches, and requests after the 40th get the series-focus fallback with no message. The current data has 25 clusters, so this is latent. Fix: slice before computing `basis`, or batch in groups of 40.
+5. **Overstated stack in AGENTS.md:65.** It says "Supabase/pgvector"; pgvector is not used anywhere. Fix: drop "/pgvector" or mark it planned.
+6. **docs/README.md is stale against the code:**
+   - :13 says "localStorage today vs planned Supabase".
+   - :16 says "planned backend".
+   - :18 says "backend plan for the AI agent".
+   - :22 says "AI clusters the evidence", but clustering is a deterministic script.
+   - :22 also says "Today decisions… live in the browser… Supabase tables are planned."
+   
+   Fix: rewrite these as built.
+7. **Unmarked LLM row in docs/tech-stack/README.md:29.** It lists "small tier for labelling (Batch API), flagship for requirement drafting, embeddings 512 dims" with no status. None of it is built. What is built: the fast model for the scouts and the strong model for the lead researcher and the assessor. Fix: mark it 🟡 and state actual use.
+
+**Low**
+8. **Scores in 10-backend-agents.md §5 don't fit the default formulas.** "Range 78 → 92" is impossible from the keep bonus alone: at the default 0.5 it adds at most 5 points. "31 → 10" also doesn't match: the default reject penalty gives about 12. Fix: give the settings used, or explain the extra change (for example a different principle fit).
+9. **DashboardHome.tsx:80 says "Saved in this browser."** With the backend connected, generations are also saved in Supabase. Fix: show the text based on `API_URL`.
+10. **"Use saved research" doesn't stick.** `research.clear()` (research.ts:136) clears the local copy, but the next mount pulls `/research/signals/latest` again (research.ts:110-119). Fix: store an explicit "use saved research" flag instead of deleting the key.
+11. **Stale header comment in scoring.ts:10-11.** It says "stored in this browser for now (Supabase later)" and "The backend agent will apply…". Fix: update the comment.
+12. **Supabase read errors lose their message.** `SupabaseStore._get` uses `raise_for_status` (db.py:137), which becomes an unhandled 500. That response carries no CORS headers, so the browser shows a generic fetch failure instead of the reason. Fix: catch `httpx.HTTPStatusError` and raise `HTTPException(502, detail=…)`.
+
+**Checked and fine:**
+- With no `NEXT_PUBLIC_API_URL`, `assess` is null and the Analysis step uses the series-focus fallback.
+- An empty principles table returns 409. Its `detail` string reaches `assessment.error`, which PrinciplesPanel shows.
+- Agent routes return 503 with a readable detail.
+- Research is limited to EU, US and CN on both sides.
+- `SCOPE_PRINCIPLE_MARKETS` covers all five scopes.
+- Gates G1–G4, Codebeamer, lineage, generation compare and per-model weights are labelled as target design in README:88, AGENTS:39, 05-hitl-map and docs/README (02 entry).</result>
+<usage><subagent_tokens>156630</subagent_tokens><tool_uses>34</tool_uses><duration_ms>199289</duration_ms></usage>
+</task-notification>

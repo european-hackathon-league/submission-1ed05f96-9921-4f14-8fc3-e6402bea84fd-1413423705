@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M4MXAMGK26XZH2G7JT2S7Y89",
+  "strategy": "manual-commit",
+  "branch": "backend-agents-tavily",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/components/pipeline/Pipeline.tsx",
+    "web/src/components/pipeline/PrinciplesPanel.tsx",
+    "web/src/lib/pipeline/principles.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 386,
+    "cache_creation_tokens": 466320,
+    "cache_read_tokens": 49079107,
+    "output_tokens": 199659,
+    "api_call_count": 190
+  }
+}
