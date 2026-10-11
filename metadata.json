@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M4MWN3C57VFVRJ3G5XG7371Y",
+  "strategy": "manual-commit",
+  "branch": "backend-agents-tavily",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/components/dashboard/DashboardHome.tsx",
+    "web/src/components/dashboard/ScoringSettings.tsx",
+    "web/src/components/dashboard/SyncBadge.tsx",
+    "web/src/components/dashboard/TopBar.tsx",
+    "web/src/components/dashboard/WeightsAssistant.tsx",
+    "web/src/components/pipeline/GenerationPage.tsx",
+    "web/src/lib/api.ts",
+    "web/src/lib/pipeline/decision-log.ts",
+    "web/src/lib/pipeline/research.ts",
+    "web/src/lib/pipeline/scoring-store.ts",
+    "web/src/lib/pipeline/sessions.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
