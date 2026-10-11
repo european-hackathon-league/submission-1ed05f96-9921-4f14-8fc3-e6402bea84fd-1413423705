@@ -18,6 +18,15 @@ async def assess_principles(body: AssessRequest, request: Request) -> AssessResu
         raise HTTPException(409, detail=str(exc)) from exc
 
 
+@router.get("/principles/run/{rid}", response_model=AssessResult)
+async def assessment_by_id(rid: str, request: Request) -> AssessResult:
+    """One stored assessment, e.g. the one a generation was built with (its assessmentId)."""
+    row = await store_of(request).get_run("principle_assessments", rid)
+    if not row:
+        raise HTTPException(404, detail=f"Unknown assessment {rid}")
+    return AssessResult.model_validate({**row["result"], "id": row["id"]})
+
+
 @router.get("/principles/latest", response_model=AssessResult | None)
 async def latest_assessment(request: Request, series: SeriesId, market: Scope) -> AssessResult | None:
     row = await store_of(request).latest_run("principle_assessments", series, market)

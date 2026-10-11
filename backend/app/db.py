@@ -3,6 +3,7 @@
 SupabaseStore talks to the hosted project through its REST API (PostgREST) with the backend-only secret key;
 schema in supabase/migrations. MemoryStore has the same interface for tests and for running without Supabase.
 """
+import re
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
@@ -10,6 +11,9 @@ import httpx
 
 from app.config import Settings
 from app.models.core import Decision, DecisionIn, Generation, Principle, PrincipleEdit, ScoringSettings, SettingsState, SettingsUpdate
+
+
+UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 
 
 def strip_customer_text(payload: Any) -> Any:
@@ -234,6 +238,8 @@ class SupabaseStore:
                           createdBy=r["created_by"], createdByRole=r["created_by_role"], payload=r["payload"])
 
     async def get_run(self, table, rid):
+        if not UUID_RE.match(rid):  # ids are uuids; anything else cannot exist (and Postgres would reject it)
+            return None
         rows = await self._get(table, {"select": "*", "id": f"eq.{rid}"})
         return rows[0] if rows else None
 

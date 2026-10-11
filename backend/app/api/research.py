@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from app.agents.research import run_research
 from app.api.deps import agent_or_503, store_of
@@ -20,6 +20,15 @@ async def research_signals(body: ResearchRequest, request: Request) -> ResearchR
         "series": body.series, "market": body.market, "request": body.model_dump(mode="json"),
         "result": out.model_dump(mode="json", exclude={"id"}), "model": out.model, "searches": out.searches})
     return out
+
+
+@router.get("/signals/run/{rid}", response_model=ResearchResult)
+async def research_by_id(rid: str, request: Request) -> ResearchResult:
+    """One stored research run, e.g. the one a generation was built with (its researchRunId)."""
+    row = await store_of(request).get_run("research_runs", rid)
+    if not row:
+        raise HTTPException(404, detail=f"Unknown research run {rid}")
+    return ResearchResult.model_validate({**row["result"], "id": row["id"]})
 
 
 @router.get("/signals/latest", response_model=ResearchResult | None)
