@@ -10,6 +10,7 @@ import type { Session } from "@/lib/pipeline/sessions";
 import { CATEGORIES, type FeatureRequest, type MarketSignal } from "@/lib/pipeline/types";
 import { PROFILE_COLOR } from "./Analytics";
 import { CATEGORY_ICON, SIGNAL_ICON } from "./icons";
+import { GenerationChat } from "./GenerationChat";
 import { RequestDetails } from "./RequestCard";
 
 const layerParts = (score: Profile["score"], l3Weight: number) => {
@@ -497,6 +498,8 @@ export function ProfileDetail({
           </footer>
         </div>
       </article>
+
+      <GenerationChat session={session} profileId={profile.id} />
     </div>
   );
 }

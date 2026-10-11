@@ -58,10 +58,14 @@ function toServer(s: Session) {
   return { id: s.id, series: s.series, market: s.scope, createdAt: s.createdAt, createdBy: s.createdBy, createdByRole: s.createdByRole, payload };
 }
 
-async function upload(s: Session) {
-  if (await push(`/generations/${s.id}`, { method: "PUT", body: JSON.stringify(toServer(s)) }))
-    write(readSessions().map((x) => (x.id === s.id ? { ...x, synced: true } : x)));
+async function upload(s: Session): Promise<boolean> {
+  const ok = await push(`/generations/${s.id}`, { method: "PUT", body: JSON.stringify(toServer(s)) });
+  if (ok) write(readSessions().map((x) => (x.id === s.id ? { ...x, synced: true } : x)));
+  return ok;
 }
+
+/** Make sure the backend has this generation (e.g. before the generation chat asks about it). */
+export const syncGeneration = (s: Session) => upload(s);
 
 export function saveSession(s: Session) {
   write([s, ...readSessions().filter((x) => x.id !== s.id)]);
