@@ -125,3 +125,12 @@ async def test_category_filter_is_enforced_after_the_model():
     req = ResearchRequest(series="G60", market="EU", categories=["Powertrain"])
     res = await run_research(agent(), req, "test")
     assert res.signals == []  # the fake scouts only return Interior signals
+
+
+def test_tests_never_reach_real_services():
+    from app.config import get_settings
+    from app.db import MemoryStore, make_store
+
+    s = get_settings()
+    assert not s.openai_api_key and not s.tavily_api_key and not s.supabase_url
+    assert isinstance(make_store(s), MemoryStore)

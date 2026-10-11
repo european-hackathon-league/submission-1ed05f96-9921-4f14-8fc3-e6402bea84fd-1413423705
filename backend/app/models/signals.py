@@ -59,6 +59,7 @@ class ResearchRequest(BaseModel):
 
 
 class ResearchResult(BaseModel):
+    id: str | None = Field(default=None, description="Stored run id (research_runs)")
     series: SeriesId
     market: Market
     signals: list[MarketSignal]
