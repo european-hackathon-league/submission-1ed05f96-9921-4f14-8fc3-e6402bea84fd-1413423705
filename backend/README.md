@@ -19,7 +19,9 @@ flowchart LR
 ```
 
 - **No search engine of our own.** The scouts get Tavily's remote MCP server as a toolset (`MCPToolset`, streamable HTTP, `Authorization: Bearer` key). Only `tavily_search` and `tavily_extract` are exposed; crawl, map and research cost far more credits. A `DEFAULT_PARAMETERS` header keeps searches on `basic` depth (1 credit).
-- **Sub-agents** come from the harness `SubAgents` capability: the lead gets one `delegate_task(agent_name, task)` tool. Each scout runs in an isolated context with its own budget (`SCOUT_TOOL_CALLS`, 180 s timeout, one call per run). A failed scout becomes a gap; the run continues.
+- **Search budget** per scout (`SCOUT_TOOL_CALLS`, default 6) is soft: past it the search tool answers "budget used up, answer now". A hard `UsageLimits` cap aborted scouts that fire several searches in parallel and lost their findings.
+- **Category filter**: `categories: ["Interior", "Digital"]` narrows the scouts' searches and is enforced again on the output.
+- **Sub-agents** come from the harness `SubAgents` capability: the lead gets one `delegate_task(agent_name, task)` tool. Each scout runs in an isolated context (180 s timeout, one call per run). A failed scout becomes a gap; the run continues.
 - **Traceability.** Every URL Tavily returns is recorded in the run's deps. After the run, `verify_sources` removes any source the model wrote but Tavily never returned, and drops signals left without a source. That is listed in `gaps`, so the PM sees it.
 - **Honesty.** `gaps` lists what the agents looked for and could not back with a source. No sources means no signal.
 - **Output contract** `app/models/signals.py` mirrors `MarketSignal` in `web/src/lib/pipeline/types.ts`.
@@ -47,7 +49,7 @@ uv run fastapi dev               # http://127.0.0.1:8000/docs
 curl -X POST localhost:8000/research/signals -H 'content-type: application/json' \
   -d '{"series":"G60","market":"EU","maxSignals":6,"featureRequests":["Simpler iDrive menus and touchscreen"]}'
 ```
-Keys: `OPENAI_API_KEY` and `TAVILY_API_KEY` in the repo-root `.env` or `backend/.env` (both git-ignored; see `.env.example`). Without a Tavily key the agents use Tavily's **keyless mode** (search + extract, shared rate limit, dev only). `/health` shows which keys are set, never their values. Without an OpenAI key, `/research/signals` answers 503 and the rest of the API stays up.
+Keys: `OPENAI_API_KEY` and `TAVILY_API_KEY` in the repo-root `.env` or `backend/.env` (both git-ignored; see `.env.example`). Empty values never override a value from the other file. Supabase: hosted project **Dixi** (`payphdohduwnmbvsfspj`, eu-west-1); fill its keys with `supabase projects api-keys --project-ref payphdohduwnmbvsfspj` (the DB password is only in the dashboard). Without a Tavily key the agents use Tavily's **keyless mode** (search + extract, shared rate limit, dev only). `/health` shows which keys are set, never their values. Without an OpenAI key, `/research/signals` answers 503 and the rest of the API stays up.
 
 A run takes about 20–60 s and uses roughly 2 × `SCOUT_TOOL_CALLS` Tavily credits at most.
 
