@@ -1,0 +1,167 @@
+let's create a new branch, and work in the backend --> https://docs.tavily.com/documentation/mcp for the agents, let's give the tavily mcp, so we dont need to create search engine, please analize the docs, and make sure to folllow the backend approach deploy sub agents for it, we can use pydantic ai harness for make simple, and we deploy then in fastapi cloud, but make sure to create antoher branch, and to mark the current version in github before start, like a release or something.
+
+---
+
+<task-notification>
+<task-id>ac77d12a57dfbe67f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/Volumes/PJ/DevCache/claude-tmp/claude-501/-Volumes-PJ-peresjav-hackathons-ehl-final-minuch-2026/014359f5-e686-4aa8-8891-31163a7924d1/tasks/ac77d12a57dfbe67f.output</output-file>
+<status>completed</status>
+<summary>Agent "Research Tavily MCP docs" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Tavily's remote MCP server fits a FastAPI + Pydantic AI backend. You point Pydantic AI's streamable-HTTP MCP client at `https://mcp.tavily.com/mcp/` and send the API key as a Bearer header. One caveat applies throughout: the tool names and parameters below come from Tavily's open-source local server, not the remote one. The remote server's schema isn't documented on its own, so run `tools/list` against it before hard-coding anything.
+
+**1. Endpoint, transport and auth**
+- **URL:** `https://mcp.tavily.com/mcp/`. The docs also show `https://mcp.tavily.com/mcp` without the trailing slash.
+- **Transport:** streamable HTTP. The docs register it with `--transport http` and `"type": "http"`. SSE only comes up for the `mcp-remote` stdio bridge.
+- **API key, either of two ways:**
+  - query parameter: `https://mcp.tavily.com/mcp/?tavilyApiKey=&lt;your-api-key&gt;`
+  - header: `Authorization: Bearer &lt;your-api-key&gt;` (shown in the GitHub README; the docs mention "setting it in the Authorization header").
+- **OAuth:** optional, with discovery and client registration. The key used under OAuth is the dashboard key named `mcp_auth_default`, then `default`, then the first key available.
+- **Keyless:** send the header `X-Tavily-Access-Mode: keyless`. This gives Search and Extract only, rate-limited. If a valid Bearer key is also sent, the key wins. Without that header and without a key, the server asks the client to sign in.
+
+**2. Tools**
+- **Names:** the server source uses underscores (`tavily_search`, `tavily_extract`, `tavily_crawl`, `tavily_map`, `tavily_research`). The docs prose says "tavily-search" and "tavily-extract" with hyphens.
+- **`tavily_search`:** requires `query`. Other parameters:
+  - `search_depth`: `basic`, `advanced`, `fast` or `ultra-fast`
+  - `topic`: only `["general"]` in the current schema, so no `news` option
+  - `time_range`: `day`, `week`, `month` or `year`
+  - `start_date` / `end_date` in `YYYY-MM-DD`; setting either clears `time_range`
+  - `max_results`: default 5, range 5–20
+  - `include_images`, `include_image_descriptions`, `include_raw_content`, `include_favicon`, `exact_match`
+  - `include_domains`, `exclude_domains`
+  - `country`: full country name such as `"Germany"`; ISO codes are not accepted
+- **`tavily_extract`:** `urls` (required), `extract_depth` (`basic` or `advanced`), `include_images`, `format` (`markdown` or `text`), `include_favicon`, `query` (reranks the extracted chunks).
+- **`tavily_crawl`:** `url` (required), `max_depth` (1), `max_breadth` (20), `limit` (50), `instructions`, `select_paths`, `select_domains`, `allow_external`, `extract_depth`, `format`, `include_favicon`.
+- **`tavily_map`:** the same as crawl minus the extract and format options.
+- **`tavily_research`:** `input` (required), `model` (`mini`, `pro` or `auto`). Its description says "Rate limit: 20 requests per minute."
+
+**3. Defaults, limits, cost**
+- **Defaults:** a `DEFAULT_PARAMETERS` header holding a JSON object, for example `{"include_images":true, "search_depth": "advanced", "max_results": 10}`. In the source these defaults override whatever the model passes, and only for search.
+- **Rate limits:** 100 requests per minute on Development keys and 1,000 on Production keys (Production needs a paid plan or PAYGO). Crawl is capped at 100 and research creation at 20. Over the limit you get `429` with `Retry-After`.
+- **Credit cost:**
+  - search: `basic` = 1 credit, `advanced` = 2
+  - extract: 1 credit per 5 successful URLs (2 for advanced)
+  - map: 1 credit per 10 pages (2 with `instructions`)
+  - crawl: map cost plus extract cost
+  - research: 4–110 credits on `mini`, 15–250 on `pro`
+- **Free tier:** 1,000 credits a month. Pay-as-you-go is $0.008 per credit.
+
+**4. Gotchas for programmatic clients**
+- Prefer the `Authorization: Bearer` header to `?tavilyApiKey=`, since URLs end up in logs and traces. Agent transcripts here upload to Entire, so keep the key out of URLs.
+- The OAuth flow needs a browser, so it doesn't suit a backend. Use the key.
+- Each MCP session gets an `X-Session-Id` (the `mcp-session-id` from initialize). You can pass `X-Human-Id` or `?humanId=` for per-user attribution; Tavily hashes it.
+- Results come back as formatted plain text ("Title: / URL: / Content:"), not JSON. You'll need to parse URLs out to keep the comment-to-requirement lineage traceable. Crawl output is cut to 200 characters per page.
+- `tavily_research` polls for up to 15 minutes, so set long MCP client timeouts. With the free tier's 1,000 credits, consider filtering it and `tavily_crawl` out of the agents' toolset.
+- Keyless rate-limit errors come back as normal text (message, retry-after, sign-up links), not as MCP errors.
+
+Sources:
+- https://docs.tavily.com/documentation/mcp
+- https://github.com/tavily-ai/tavily-mcp
+- https://raw.githubusercontent.com/tavily-ai/tavily-mcp/main/src/index.ts
+- https://docs.tavily.com/documentation/keyless
+- https://docs.tavily.com/documentation/rate-limits
+- https://docs.tavily.com/documentation/api-credits</result>
+<usage><subagent_tokens>82668</subagent_tokens><tool_uses>5</tool_uses><duration_ms>35544</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ad99c6a42abff9984</task-id>
+<tool-use-id>toolu_01UCDxVwmz7QJRp86fdUJo8z</tool-use-id>
+<output-file>/Volumes/PJ/DevCache/claude-tmp/claude-501/-Volumes-PJ-peresjav-hackathons-ehl-final-minuch-2026/014359f5-e686-4aa8-8891-31163a7924d1/tasks/ad99c6a42abff9984.output</output-file>
+<status>completed</status>
+<summary>Agent "Research Pydantic AI + FastAPI Cloud" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Part A: Pydantic AI
+
+**Version.** The live PyPI JSON shows `pydantic-ai` **2.55.0**. Exa's cached copy of the PyPI page showed 2.53.0, so use the live number. **v2 is out**: 2.0.0 was uploaded on 2026-06-23. The docs have moved to **pydantic.dev/docs/ai**. Exa's cache of ai.pydantic.dev is stale and still shows the removed v0 API (`MCPServerHTTP`, `mcp_servers=`, `run_mcp_servers()`). Sources: https://pypi.org/project/pydantic-ai/ and https://pypi.org/pypi/pydantic-ai/json
+
+**1. Remote MCP over streamable HTTP.** The current class is `MCPToolset` from `pydantic_ai.mcp`, attached through `toolsets=`. `MCPServerStreamableHTTP` is not on the current client page. A URL is treated as streamable HTTP unless it ends in `/sse`. The docs say `MCPToolset` takes `headers` for static headers and `auth` for a bearer string, an `httpx2.Auth`, or `'oauth'`.
+```python
+from pydantic_ai import Agent
+from pydantic_ai.mcp import MCPToolset
+
+tavily = MCPToolset('https://mcp.example.com/mcp', headers={'Authorization': 'Bearer …'})
+# or: MCPToolset(url, auth=token)
+agent = Agent('openai:gpt-5.2', toolsets=[tavily.prefixed('tavily')])  # tools become tavily_*
+```
+- **Prefixes:** there is no `tool_prefix` keyword. Use `.prefixed('name')` instead.
+- **Filtering:** use `.filtered(lambda ctx, tool_def: tool_def.name in ALLOWED)`. MCP `meta` and `annotations` appear in `tool_def.metadata`.
+- **Other options:** `include_instructions=True` adds the server's instructions to the agent's instructions. `process_tool_call=` lets you change each call (for example, to inject metadata).
+- **Higher-level option:** `from pydantic_ai.capabilities import MCP` gives `MCP('https://…')`, used as `Agent(..., capabilities=[MCP(...)])`. Add `native=True` to use the model provider's own MCP support.
+- **Per-user credentials:** a shared `MCPToolset` is one identity for every run. For per-user tokens, build the toolset per run with `@agent.toolset(per_run_step=False)`.
+
+Source: https://pydantic.dev/docs/ai/mcp/client/ and https://pydantic.dev/docs/ai/capabilities/mcp/
+
+**2. Lifecycle.** The docs say: "If you don't explicitly enter one of these context managers, the toolset will be opened and closed automatically as needed." `async with agent:` (all toolsets) or `async with toolset:` (one toolset, shareable across agents) keeps the connection open, so each run doesn't reconnect. In a FastAPI app, enter it in the lifespan. This pattern is my inference, not quoted from the docs:
+```python
+@asynccontextmanager
+async def lifespan(app):
+    async with tavily:   # or: async with agent:
+        yield
+```
+
+**3. Output, model strings and delegation.**
+- **Structured output:** `Agent('openai:gpt-6-sol', output_type=MyModel)`, read with `result.output`.
+- **Model strings:** `'openai:'` now maps to `OpenAIResponsesModel` (the Responses API). `'openai-chat:'` pins the old Chat Completions API (`OpenAIChatModel`). `'openai-responses:'` still appears in the docs examples. Source: https://pydantic.dev/docs/ai/models/openai/
+- **Delegation:** call the other agent from inside a tool and pass `usage=ctx.usage`:
+```python
+@parent.tool
+async def joke_factory(ctx: RunContext, count: int) -&gt; list[str]:
+    r = await child.run(f'Please generate {count} jokes.', usage=ctx.usage)
+    return r.output
+```
+The docs now recommend the Harness `SubAgents` capability for this, which exposes one `delegate_task(agent_name, task)` tool. Source: https://pydantic.dev/docs/ai/multi-agent-applications/
+
+**4. "Pydantic AI Harness" exists.** It is the official package `pydantic-ai-harness`, version **0.55.0** on PyPI: "The official capability and harness library for Pydantic AI."
+- **What it is:** everything is a *capability* added through `capabilities=[...]`. There are 30+ of them, including `Coder`, `Researcher`, `SubAgents`, `Planning`, `Memory`, `Advisor`, `Guardrails`, `FileSystem`, `Shell`, `ExaSearch`, sandboxes and `DynamicWorkflow`.
+- **Install:** `uv add "pydantic-ai-harness[coder]"`
+- **Usage:**
+```python
+from pydantic_ai.capabilities import LocalWorkspace, WebSearch
+from pydantic_ai_harness import Coder, Memory
+agent = Agent('openai:gpt-5.6-sol', capabilities=[LocalWorkspace('.'), Coder(), WebSearch()])
+```
+- **Gotcha:** workspace-based capabilities fail at run start unless a workspace capability is attached.
+
+Source: https://pydantic.dev/docs/ai/harness/
+
+## Part B: FastAPI Cloud
+
+**1. Deploy.**
+- **Status:** public beta since 2026-06-22, so there is no waitlist, but it is not GA either. Source: https://fastapicloud.com/blog/fastapi-cloud-public-beta/
+- **Package:** add `fastapi[standard]`, which includes the cloud CLI (`fastapi-cloud-cli` 0.26.0; `fastapi` 0.143.0).
+- **Commands:** `fastapi login`, then `fastapi deploy [PATH]` (also available as `fastapi cloud deploy`). If you aren't logged in, the first deploy opens the browser to sign in. Useful flags are `--app-id` (or the `FASTAPI_CLOUD_APP_ID` env var) and `--no-wait`. CI setup is `fastapi cloud setup-ci`, plus deploy tokens and a GitHub integration.
+- **Finding the app:** it auto-detects `main.py`, `app.py` or `app/main.py`. Otherwise set it in `pyproject.toml` with `[tool.fastapi]` and `entrypoint = "myapp.main:app"`. The check is that `fastapi dev` works with no path. Sources: https://fastapicloud.com/docs/getting-started/existing-project/ and https://fastapicloud.com/docs/builds-and-deployments/configuring-fastapi/
+- **Dependencies:** it reads `pyproject.toml` and supports uv including `uv.lock`, as well as `pylock.toml` and `requirements.txt`. Monorepos and nested folders are supported through "application directories".
+- **Python:** any supported version (3.10+), latest stable by default. Pin with `requires-python = "==3.12.*"` or a `.python-version` file. Source: https://fastapicloud.com/docs/builds-and-deployments/install-dependencies/
+- **Env vars and secrets:**
+  - `fastapi cloud env set --secret OPENAI_API_KEY "…"`, plus `env list` and `env delete`.
+  - Setting a variable does **not** redeploy, so it takes effect on the next deploy.
+  - The dashboard can import a pasted `.env` file.
+  - The platform sets `FASTAPI_PUBLIC_URL` and `FASTAPICLOUD_DEPLOYMENT_ID`.
+  - Source: https://fastapicloud.com/docs/fastapi-cloud-cli/env/
+- **Regions:** you can't choose one. "Regions" is on the roadmap.
+- **Free tier (Hobby, $0):** 3 apps, 0.1 vCPU / 512 MB shared (burst to 0.5), scale-to-zero, 1-day logs, no credit card. Pro is $20 per seat per month, and compute is not invoiced during the beta. Source: https://fastapicloud.com/pricing/
+- **Cloudflare gotcha:** requests with Python `urllib`'s default User-Agent get a 403 (error 1010). Set a descriptive `User-Agent`.
+
+**2. Config files.**
+- **`.fastapicloud/`:** the first deploy, or `fastapi cloud link`, creates this directory, which links your local folder to the app. `fastapi cloud unlink` removes it. The docs don't say whether to commit it. My recommendation (inferred) is to git-ignore it, since `--app-id` and CI tokens cover CI, and this repo's allow-list `.gitignore` already leaves it out.
+- **`.fastapicloudignore`:** optional. Uploads already respect `.gitignore`, and this file overrides or un-ignores on top of it.
+- **Monorepo note:** if `backend/` is deployed from the repo root, use `fastapi deploy backend` or set the application directory.</result>
+<usage><subagent_tokens>117988</subagent_tokens><tool_uses>15</tool_uses><duration_ms>98651</duration_ms></usage>
+</task-notification>
+
+---
+
+i added tavily api key, we also have openai, because we can use open ai desicion model, for the categories fildetirn etc.
+
+---
+
+make sure to use supabase mcp, or cli, and get the information we need for the .env please
+
+---
+
+also take the information alreayd in .env root, to the .env of the backend.
