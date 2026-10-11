@@ -1,0 +1,13 @@
+question [Image #1] what costumer said is actually comign from database? i mean, from bmw dataset? or from where is coming that?
+
+---
+
+at the moment i lcick in analycs a new serie car, is actually ai pepiline running there? or is hardcoded?
+
+---
+
+i mean after i select market and car, then it runs analytsis of trends, competitors, and also should analize the data from bmw, is this something that is actually working?
+
+---
+
+ok, in that case cna you make sure do document clearly this behavior, and we mention that this data should be run ina  cron job in the future analyzin data at elast one per month, feedback and trends.
