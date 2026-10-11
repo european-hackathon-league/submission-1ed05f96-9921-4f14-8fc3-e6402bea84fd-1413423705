@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M4MWWN29W8KN04VBFRJJN68T",
+  "strategy": "manual-commit",
+  "branch": "backend-agents-tavily",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md",
+    "docs/architecture/10-backend-agents.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 350,
+    "cache_creation_tokens": 410774,
+    "cache_read_tokens": 41437671,
+    "output_tokens": 183543,
+    "api_call_count": 173
+  }
+}
