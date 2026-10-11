@@ -1,0 +1,66 @@
+let's create a new branch, and work in the backend --> https://docs.tavily.com/documentation/mcp for the agents, let's give the tavily mcp, so we dont need to create search engine, please analize the docs, and make sure to folllow the backend approach deploy sub agents for it, we can use pydantic ai harness for make simple, and we deploy then in fastapi cloud, but make sure to create antoher branch, and to mark the current version in github before start, like a release or something.
+
+---
+
+<task-notification>
+<task-id>ac77d12a57dfbe67f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/Volumes/PJ/DevCache/claude-tmp/claude-501/-Volumes-PJ-peresjav-hackathons-ehl-final-minuch-2026/014359f5-e686-4aa8-8891-31163a7924d1/tasks/ac77d12a57dfbe67f.output</output-file>
+<status>completed</status>
+<summary>Agent "Research Tavily MCP docs" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Tavily's remote MCP server fits a FastAPI + Pydantic AI backend. You point Pydantic AI's streamable-HTTP MCP client at `https://mcp.tavily.com/mcp/` and send the API key as a Bearer header. One caveat applies throughout: the tool names and parameters below come from Tavily's open-source local server, not the remote one. The remote server's schema isn't documented on its own, so run `tools/list` against it before hard-coding anything.
+
+**1. Endpoint, transport and auth**
+- **URL:** `https://mcp.tavily.com/mcp/`. The docs also show `https://mcp.tavily.com/mcp` without the trailing slash.
+- **Transport:** streamable HTTP. The docs register it with `--transport http` and `"type": "http"`. SSE only comes up for the `mcp-remote` stdio bridge.
+- **API key, either of two ways:**
+  - query parameter: `https://mcp.tavily.com/mcp/?tavilyApiKey=&lt;your-api-key&gt;`
+  - header: `Authorization: Bearer &lt;your-api-key&gt;` (shown in the GitHub README; the docs mention "setting it in the Authorization header").
+- **OAuth:** optional, with discovery and client registration. The key used under OAuth is the dashboard key named `mcp_auth_default`, then `default`, then the first key available.
+- **Keyless:** send the header `X-Tavily-Access-Mode: keyless`. This gives Search and Extract only, rate-limited. If a valid Bearer key is also sent, the key wins. Without that header and without a key, the server asks the client to sign in.
+
+**2. Tools**
+- **Names:** the server source uses underscores (`tavily_search`, `tavily_extract`, `tavily_crawl`, `tavily_map`, `tavily_research`). The docs prose says "tavily-search" and "tavily-extract" with hyphens.
+- **`tavily_search`:** requires `query`. Other parameters:
+  - `search_depth`: `basic`, `advanced`, `fast` or `ultra-fast`
+  - `topic`: only `["general"]` in the current schema, so no `news` option
+  - `time_range`: `day`, `week`, `month` or `year`
+  - `start_date` / `end_date` in `YYYY-MM-DD`; setting either clears `time_range`
+  - `max_results`: default 5, range 5–20
+  - `include_images`, `include_image_descriptions`, `include_raw_content`, `include_favicon`, `exact_match`
+  - `include_domains`, `exclude_domains`
+  - `country`: full country name such as `"Germany"`; ISO codes are not accepted
+- **`tavily_extract`:** `urls` (required), `extract_depth` (`basic` or `advanced`), `include_images`, `format` (`markdown` or `text`), `include_favicon`, `query` (reranks the extracted chunks).
+- **`tavily_crawl`:** `url` (required), `max_depth` (1), `max_breadth` (20), `limit` (50), `instructions`, `select_paths`, `select_domains`, `allow_external`, `extract_depth`, `format`, `include_favicon`.
+- **`tavily_map`:** the same as crawl minus the extract and format options.
+- **`tavily_research`:** `input` (required), `model` (`mini`, `pro` or `auto`). Its description says "Rate limit: 20 requests per minute."
+
+**3. Defaults, limits, cost**
+- **Defaults:** a `DEFAULT_PARAMETERS` header holding a JSON object, for example `{"include_images":true, "search_depth": "advanced", "max_results": 10}`. In the source these defaults override whatever the model passes, and only for search.
+- **Rate limits:** 100 requests per minute on Development keys and 1,000 on Production keys (Production needs a paid plan or PAYGO). Crawl is capped at 100 and research creation at 20. Over the limit you get `429` with `Retry-After`.
+- **Credit cost:**
+  - search: `basic` = 1 credit, `advanced` = 2
+  - extract: 1 credit per 5 successful URLs (2 for advanced)
+  - map: 1 credit per 10 pages (2 with `instructions`)
+  - crawl: map cost plus extract cost
+  - research: 4–110 credits on `mini`, 15–250 on `pro`
+- **Free tier:** 1,000 credits a month. Pay-as-you-go is $0.008 per credit.
+
+**4. Gotchas for programmatic clients**
+- Prefer the `Authorization: Bearer` header to `?tavilyApiKey=`, since URLs end up in logs and traces. Agent transcripts here upload to Entire, so keep the key out of URLs.
+- The OAuth flow needs a browser, so it doesn't suit a backend. Use the key.
+- Each MCP session gets an `X-Session-Id` (the `mcp-session-id` from initialize). You can pass `X-Human-Id` or `?humanId=` for per-user attribution; Tavily hashes it.
+- Results come back as formatted plain text ("Title: / URL: / Content:"), not JSON. You'll need to parse URLs out to keep the comment-to-requirement lineage traceable. Crawl output is cut to 200 characters per page.
+- `tavily_research` polls for up to 15 minutes, so set long MCP client timeouts. With the free tier's 1,000 credits, consider filtering it and `tavily_crawl` out of the agents' toolset.
+- Keyless rate-limit errors come back as normal text (message, retry-after, sign-up links), not as MCP errors.
+
+Sources:
+- https://docs.tavily.com/documentation/mcp
+- https://github.com/tavily-ai/tavily-mcp
+- https://raw.githubusercontent.com/tavily-ai/tavily-mcp/main/src/index.ts
+- https://docs.tavily.com/documentation/keyless
+- https://docs.tavily.com/documentation/rate-limits
+- https://docs.tavily.com/documentation/api-credits</result>
+<usage><subagent_tokens>82668</subagent_tokens><tool_uses>5</tool_uses><duration_ms>35544</duration_ms></usage>
+</task-notification>
