@@ -23,8 +23,10 @@ import {
 import type { SeriesConfig } from "@/lib/pipeline/series";
 import { MARKET_SIGNALS } from "@/lib/pipeline/market-signals";
 import { useResearch } from "@/lib/pipeline/research";
+import { useAssessment, usePrinciples, type AssessInput } from "@/lib/pipeline/principles";
+import { logDecision, logUndo, pullDecisions } from "@/lib/pipeline/decision-log";
 import { CATEGORIES, type Category, type FeatureRequest, type MarketSignal, type SeriesData } from "@/lib/pipeline/types";
-import { generationHref, newSessionId, readSessions, saveSession, type Session } from "@/lib/pipeline/sessions";
+import { generationHref, newSessionId, pullSessions, readSessions, saveSession, type Session } from "@/lib/pipeline/sessions";
 import { buildMemory, scoreRequest } from "@/lib/pipeline/scoring";
 import { useScoring } from "@/lib/pipeline/scoring-store";
 import { RejectDialog } from "./RejectDialog";
@@ -32,6 +34,7 @@ import { BannerStat, CarBanner } from "./CarBanner";
 import { DecisionLog } from "./DecisionLog";
 import { RequestCard, RequestDetails } from "./RequestCard";
 import { SignalsPanel } from "./SignalsPanel";
+import { PrinciplesPanel } from "./PrinciplesPanel";
 
 type Stage = "analysing" | "review" | "building" | "profiles";
 
@@ -118,6 +121,18 @@ export function Pipeline({
   }, [signals]);
   const focusTitles = new Set(signals.find((sg) => sg.id === focus)?.relatesTo ?? []);
 
+  /* L1: principles for this market + series (Supabase) and the principle assessor's fit per request. */
+  const principles = usePrinciples(scope, cfg.id);
+  const assessment = useAssessment(scope, cfg.id);
+  /* What the assessor gets: aggregate request data only (title, category, mention count, backing signal titles). */
+  const assessInputs: AssessInput[] = useMemo(
+    () =>
+      data.requests
+        .map((r) => ({ id: r.id, title: r.title, category: r.category, mentions: scopedMentions(r, scope, fallback), backing: (signalsByTitle.get(r.title) ?? []).map((sg) => sg.title) }))
+        .filter((r) => r.mentions > 0),
+    [data.requests, scope, fallback, signalsByTitle],
+  );
+
   /* Saved decisions are restored when the analysis finishes (client only, so the server HTML stays stable). */
   /* Decision memory: earlier generations, read when the list opens. */
   const [generations, setGenerations] = useState<Session[]>([]);
@@ -125,35 +140,44 @@ export function Pipeline({
   const scoring = useScoring();
   const memory = useMemo(() => buildMemory(generations, cfg.id, scope, scoring), [generations, cfg.id, scope, scoring]);
 
-  const finishAnalysis = useCallback(() => {
-    setGenerations(readSessions());
-    setDecisions(readDecisions(key));
+  /* Earlier generations (decision memory) and the current decisions come from the backend when it is configured:
+   * generations from Supabase, decisions folded from the server's append-only history. Local copies otherwise. */
+  const finishAnalysis = useCallback(async () => {
+    setGenerations(await pullSessions());
+    const remote = await pullDecisions(cfg.id, scope);
+    const d = remote ?? readDecisions(key);
+    if (remote) writeDecisions(key, remote);
+    setDecisions(d);
     setOrder(readJson<string[]>(priorityKey(scope, cfg.id), []));
     setStage("review");
   }, [key, scope, cfg.id]);
 
+  /* State updaters stay pure (React may run them twice); the server write happens once, outside. */
   const decide = useCallback(
-    (item: { id: string; title: string }, action: Decision["action"], reason?: string, mentionsAt?: number) =>
+    (item: { id: string; title: string }, action: Decision["action"], reason?: string, mentionsAt?: number) => {
+      const who = currentUser();
+      const d: Decision = { requestId: item.id, title: item.title, action, reason, mentionsAt, by: who.name, role: who.role, at: new Date().toISOString() };
       setDecisions((prev) => {
-        const who = currentUser();
-        const next = {
-          ...prev,
-          [item.id]: { requestId: item.id, title: item.title, action, reason, mentionsAt, by: who.name, role: who.role, at: new Date().toISOString() },
-        };
+        const next = { ...prev, [item.id]: d };
         writeDecisions(key, next);
         return next;
-      }),
-    [key],
+      });
+      logDecision(cfg.id, scope, d);
+    },
+    [key, cfg.id, scope],
   );
   const undo = useCallback(
-    (id: string) =>
+    (id: string) => {
+      const old = decisions[id];
       setDecisions((prev) => {
         const next = { ...prev };
         delete next[id];
         writeDecisions(key, next);
         return next;
-      }),
-    [key],
+      });
+      if (old) logUndo(cfg.id, scope, old, currentUser().name, currentUser().role);
+    },
+    [key, cfg.id, scope, decisions],
   );
 
   const rows = useMemo(
@@ -163,7 +187,7 @@ export function Pipeline({
         .filter((x) => x.scoped > 0)
         .map((x, _i, all) => {
           const max = Math.max(...all.map((y) => y.scoped));
-          const scored = scoreRequest(x.req, x.scoped, max, signalsByTitle.get(x.req.title)?.length ?? 0, cfg.focus, memory, scoring);
+          const scored = scoreRequest(x.req, x.scoped, max, signalsByTitle.get(x.req.title)?.length ?? 0, cfg.focus, memory, scoring, undefined, assessment.fits.get(x.req.id)?.fit);
           return { ...x, urgency: urgencyOf(x.scoped), scored };
         })
         /* Default order = Dixi score (demand, market backing, principle fit, decision memory). The PM's drag order wins. */
@@ -173,7 +197,7 @@ export function Pipeline({
           if (ia !== -1 || ib !== -1) return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
           return b.scored.score - a.scored.score || b.scoped - a.scoped;
         }),
-    [data.requests, scope, fallback, order, signalsByTitle, cfg.focus, memory, scoring],
+    [data.requests, scope, fallback, order, signalsByTitle, cfg.focus, memory, scoring, assessment.fits],
   );
 
   /* Reordering works on the full list, so moving inside a filtered view keeps everything else in place. */
@@ -294,8 +318,8 @@ export function Pipeline({
   const open = rows.length - kept.length - rejectedCount;
 
   const profiles = useMemo(
-    () => (kept.length >= MIN_KEPT_TO_BUILD ? buildProfiles(kept, cfg, scope, fallback, null, wishlist, signals) : []),
-    [kept, cfg, scope, fallback, wishlist, signals],
+    () => (kept.length >= MIN_KEPT_TO_BUILD ? buildProfiles(kept, cfg, scope, fallback, null, wishlist, signals, assessment.fits) : []),
+    [kept, cfg, scope, fallback, wishlist, signals, assessment.fits],
   );
 
   /* Built: save the generation and open its dashboard. The pipeline's job ends here. */
@@ -315,9 +339,11 @@ export function Pipeline({
       decisions,
       order: rows.map((r) => r.req.id),
       campaigns: null,
+      researchRunId: research.result?.id ?? null,
+      assessmentId: assessment.result?.id ?? null,
     });
     router.push(generationHref(id));
-  }, [scope, scopeLabel, cfg, profiles, decisions, rows, router]);
+  }, [scope, scopeLabel, cfg, profiles, decisions, rows, router, research.result, assessment.result]);
 
   /* "Edit and rebuild" from a generation: /dashboard/<market>/<series>#session=<id> loads its decisions and priority. */
   useEffect(() => {
@@ -359,7 +385,20 @@ export function Pipeline({
         </div>
       )}
 
-      {stage === "analysing" && <Analysis cfg={cfg} data={data} scopeLabel={scopeLabel} rows={rows.length} signals={signals.length} volume={fallback ? marketVolume(data, "ALL") : volume} onDone={finishAnalysis} />}
+      {stage === "analysing" && (
+        <Analysis
+          cfg={cfg}
+          data={data}
+          scopeLabel={scopeLabel}
+          rows={rows.length}
+          signals={signals.length}
+          liveResearch={research.result !== null}
+          principles={principles?.length ?? null}
+          volume={fallback ? marketVolume(data, "ALL") : volume}
+          assess={assessment.available ? () => assessment.ensure(assessInputs) : null}
+          onDone={finishAnalysis}
+        />
+      )}
 
       {stage === "building" && <Building count={kept.length} onDone={finishBuild} />}
 
@@ -481,8 +520,9 @@ export function Pipeline({
             )}
           </section>
 
-          <aside className="flex flex-col gap-6 xl:sticky xl:top-20 xl:self-start">
+          <aside className="flex flex-col gap-6 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-y-auto">
             <DecisionLog decisions={decisions} />
+            <PrinciplesPanel principles={principles} assessment={assessment} onAssess={() => void assessment.run(assessInputs)} />
             <Context data={data} scope={scope} />
           </aside>
         </div>
@@ -516,6 +556,7 @@ export function Pipeline({
         req={details}
         signals={details ? signalsByTitle.get(details.title) ?? [] : []}
         scored={details ? rows.find((r) => r.req.id === details.id)?.scored : undefined}
+        fit={details ? assessment.fits.get(details.id) : undefined}
         onClose={() => setDetails(null)}
       />
 
@@ -627,14 +668,18 @@ function Stepper({ stage, canBuild, onGo }: { stage: Stage; canBuild: boolean; o
   );
 }
 
-/** A short, honest replay of what the AI does. The work is precomputed; the animation shows the order of the steps. */
+/** The analysis, step by step. Each line says where its data comes from. The principle assessor step is a real call to
+ *  the backend agent (or reuses the cached assessment of the same request set); the other steps show work done before. */
 function Analysis({
   cfg,
   data,
   scopeLabel,
   rows,
   signals,
+  liveResearch,
+  principles,
   volume,
+  assess,
   onDone,
 }: {
   cfg: SeriesConfig;
@@ -642,44 +687,77 @@ function Analysis({
   scopeLabel: string;
   rows: number;
   signals: number;
+  liveResearch: boolean;
+  principles: number | null;
   volume: number;
+  assess: (() => Promise<unknown>) | null;
   onDone: () => void;
 }) {
   /* Plain words, no layer codes. Social media (L3) is not part of this analysis: it comes after the profiles exist. */
-  const groups = [
-    { title: "BMW principles", steps: [`Retrieving the fundamentals and principles for the ${cfg.name} (${cfg.principles.length})`] },
+  type Step = { text: string; run?: () => Promise<unknown> };
+  const groups: { title: string; steps: Step[] }[] = [
+    {
+      title: "BMW principles",
+      steps: [
+        {
+          text:
+            principles !== null
+              ? `Loaded ${principles} L1 principles for the ${cfg.name} in ${scopeLabel}: series fundamentals, market and Group principles (Supabase)`
+              : assess
+                ? `Loading L1 principles for the ${cfg.name} in ${scopeLabel} from Supabase`
+                : `Using the ${cfg.name}'s ${cfg.principles.length} series fundamentals (backend not connected: no market principles)`,
+        },
+      ],
+    },
     {
       title: "Market evidence",
       steps: [
-        `Reading ${volume.toLocaleString("en")} customer comments and feature requests from ${scopeLabel}`,
-        `Adding customer studies${data.sales.length ? ", sales volumes" : ""}${data.options.length ? ` and ${data.options.length} options from today's price list` : ""}`,
-        `Research agent: scanning competitors and market trends (${signals} found)`,
+        { text: `Reading ${volume.toLocaleString("en")} customer comments from ${scopeLabel}, grouped by BMW's feedback taxonomy (data script)` },
+        { text: `Adding customer studies${data.sales.length ? ", sales volumes" : ""}${data.options.length ? ` and ${data.options.length} options from today's price list` : ""}` },
+        { text: liveResearch ? `Competitors & trends: last live research run (${signals} signals, sources checked)` : `Competitors & trends: saved research (${signals} signals). Run the research agent for a live search` },
       ],
     },
     {
       title: "Building the list",
       steps: [
-        "Grouping similar comments into feature requests",
-        "Linking requests to competitors and trends",
-        "Sorting into Exterior · Interior · Digital · Powertrain",
-        `Scoring urgency: ${rows} feature requests ready`,
+        { text: "Linking requests to competitors and trends" },
+        { text: `Scoring urgency: ${rows} feature requests ready` },
+        assess
+          ? { text: `Principle assessor (AI): rating ${rows} requests against the L1 principles, assumptions kept separate`, run: assess }
+          : { text: "Principle fit: series focus only (connect the backend for the AI principle assessor)" },
       ],
     },
   ];
   const steps = groups.flatMap((g) => g.steps);
   const [done, setDone] = useState(0);
+  const finished = useRef(false);
+  const finish = useCallback(() => {
+    if (finished.current) return;
+    finished.current = true;
+    onDone();
+  }, [onDone]);
 
   useEffect(() => {
+    let cancelled = false;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = setInterval(() => setDone((d) => d + 1), reduce ? 120 : 520);
-    return () => clearInterval(t);
+    const pause = (ms: number) => new Promise((r) => setTimeout(r, reduce ? 100 : ms));
+    (async () => {
+      for (let i = 0; i < steps.length; i++) {
+        if (cancelled) return;
+        const run = steps[i].run;
+        if (run) await run().catch(() => null);
+        else await pause(450);
+        if (!cancelled) setDone(i + 1);
+      }
+      await pause(300);
+      if (!cancelled) finish();
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // The steps are fixed for one analysis; re-running on every render would call the agent again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    if (done > steps.length) {
-      const t = setTimeout(onDone, 350);
-      return () => clearTimeout(t);
-    }
-  }, [done, steps.length, onDone]);
 
   return (
     <section aria-live="polite" className="mx-auto w-full max-w-xl rounded-card border border-line bg-surface p-6 shadow-card">
@@ -688,7 +766,7 @@ function Analysis({
       </p>
       <ol className="mt-4 flex flex-col gap-2.5">
         {steps.map((s, i) => (
-          <li key={s} className={`flex flex-col gap-2.5 text-sm transition-opacity duration-300 ${i <= done ? "opacity-100" : "opacity-30"}`}>
+          <li key={s.text} className={`flex flex-col gap-2.5 text-sm transition-opacity duration-300 ${i <= done ? "opacity-100" : "opacity-30"}`}>
             {groups.map((g) =>
               g.steps[0] === s ? (
                 <span key={g.title} className={`text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted ${i > 0 ? "mt-2" : ""}`}>
@@ -704,12 +782,12 @@ function Analysis({
             ) : (
               <span aria-hidden className="size-4 rounded-full ring-1 ring-line" />
             )}
-            <span className={i < done ? "text-ink-soft" : "text-ink"}>{s}</span>
+            <span className={i < done ? "text-ink-soft" : "text-ink"}>{s.text}</span>
             </span>
           </li>
         ))}
       </ol>
-      <button type="button" onClick={onDone} className="mt-5 text-xs text-muted underline-offset-2 hover:text-ink hover:underline">
+      <button type="button" onClick={finish} className="mt-5 text-xs text-muted underline-offset-2 hover:text-ink hover:underline">
         Skip
       </button>
     </section>

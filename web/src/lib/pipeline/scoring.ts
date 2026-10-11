@@ -107,10 +107,12 @@ export function scoreRequest(
   memory: Map<string, MemoryEntry>,
   s: ScoringSettings,
   now = Date.now(),
+  /** Principle fit 0–1 from the principle assessor (L1). Without one: 1 if the category is in the series focus, else 0.4. */
+  principleFit?: number,
 ): Scored {
   const demand = maxScoped > 0 ? Math.log1p(scoped) / Math.log1p(maxScoped) : 0;
   const backing = Math.min(1, backingCount / 2);
-  const fit = focus.includes(req.category) ? 1 : 0.4;
+  const fit = principleFit ?? (focus.includes(req.category) ? 1 : 0.4);
   const wSum = s.wDemand + s.wBacking + s.wFit || 1;
   const base = (100 * (s.wDemand * demand + s.wBacking * backing + s.wFit * fit)) / wSum;
 

@@ -4,6 +4,7 @@ import { Check, ExternalLink, GripVertical, History, Info, RotateCcw, Tag, Trend
 import { useEffect, useRef } from "react";
 import type { Decision, Urgency } from "@/lib/pipeline/profiles";
 import type { Scored } from "@/lib/pipeline/scoring";
+import type { RequestFit } from "@/lib/pipeline/principles";
 import type { Category, FeatureRequest, MarketSignal, OptionItem } from "@/lib/pipeline/types";
 import { CATEGORY_TILE, CategoryTile, SIGNAL_ICON, SignalBadge, TYPE_CLS, TYPE_ICON, TYPE_LABEL, UrgencyFlames } from "./icons";
 
@@ -275,6 +276,7 @@ export function RequestDetails({
   scored,
   decision,
   priority,
+  fit,
   onClose,
 }: {
   req: FeatureRequest | null;
@@ -283,6 +285,8 @@ export function RequestDetails({
   /** The PM decision behind this request, when shown from a profile. */
   decision?: Decision;
   priority?: number;
+  /** L1: what the principle assessor said about this request. */
+  fit?: RequestFit;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -382,6 +386,30 @@ export function RequestDetails({
                   ))}
                 </dl>
               </div>
+              <p className="mt-2 text-xs text-muted">
+                {fit ? "Principle fit from the L1 principle assessor." : "Principle fit = series focus (no principle assessment for this request)."}
+              </p>
+              {fit && (
+                <div className="mt-3 rounded-lg bg-l1-soft/50 p-3 text-xs">
+                  <p className="font-semibold text-ink">Principles (L1) · fit {Math.round(fit.fit * 100)}</p>
+                  <p className="mt-0.5 text-ink-soft">{fit.rationale}</p>
+                  {fit.supports.length > 0 && <p className="mt-1 text-ink-soft">Supports: <span className="font-mono">{fit.supports.join(", ")}</span></p>}
+                  {fit.tensions.length > 0 && <p className="mt-1 text-human">Strains: <span className="font-mono">{fit.tensions.join(", ")}</span></p>}
+                  {fit.evidence.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-medium text-ink">Evidence</p>
+                      <ul className="list-disc pl-4 text-ink-soft">{fit.evidence.map((e) => <li key={e}>{e}</li>)}</ul>
+                    </div>
+                  )}
+                  {fit.assumptions.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-medium text-wait">Assumptions (not shown by the evidence)</p>
+                      <ul className="list-disc pl-4 text-ink-soft">{fit.assumptions.map((e) => <li key={e}>{e}</li>)}</ul>
+                    </div>
+                  )}
+                  {fit.memory && <p className="mt-2 text-muted">Memory: {fit.memory}</p>}
+                </div>
+              )}
               {scored.memory && (
                 <div className={`mt-3 rounded-lg p-3 text-xs ${scored.state === "rejected" ? "bg-bad-soft/60" : scored.state === "resurfaced" ? "bg-wait-soft" : "bg-good-soft"}`}>
                   <p className="font-semibold text-ink">
